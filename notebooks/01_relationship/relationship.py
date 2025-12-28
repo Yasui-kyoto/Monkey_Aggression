@@ -6,18 +6,32 @@ app = marimo.App()
 
 @app.cell
 def _():
+    # 個体間関係
+    return
+
+
+@app.cell
+def _():
     import pandas as pd
     import networkx as nx
     import matplotlib.pyplot as plt
     import numpy as np
     import marimo as mo
-    return mo, nx, pd, plt
+    return mo, np, nx, pd, plt
 
 
 @app.cell
 def _(mo):
     mo.md(r"""
-    ## グルーミングdataと属性dataの読み込み
+    ## グルーミング
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    ### グルーミングdataと属性dataの読み込み
     """)
     return
 
@@ -193,6 +207,69 @@ def _(df_aggresion, df_attr, mo, nx, plt):
 def _(display_output_agg):
     # 攻撃グラフの表示
     display_output_agg
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    ## David's Score による順位分析
+    """)
+    return
+
+
+@app.cell
+def _(df_aggresion, df_attr, np, pd, plt):
+    # 1. David's Score の計算準備
+    # 行列を numpy 形式に変換 (NaNは0に置換)
+    mat = df_aggresion.fillna(0).values
+    n = mat.shape[0]
+
+    # 個体間の勝率行列 P_ij (iがjに勝った回数 / (iがjに勝った + jがiに勝った))
+    P = np.zeros((n, n))
+    for i in range(n):
+        for j in range(n):
+            if i != j:
+                total = mat[i, j] + mat[j, i]
+                if total > 0:
+                    P[i, j] = mat[i, j] / total
+
+    # 2. 各指標の計算
+    w1 = np.sum(P, axis=1)
+    w2 = np.dot(P, w1)
+    l1 = np.sum(P.T, axis=1)
+    l2 = np.dot(P.T, l1)
+
+    ds = w1 + w2 - l1 - l2
+
+    # 0 ~ 10 の範囲に正規化（ご要望のスケール）
+    ds_min, ds_max = np.min(ds), np.max(ds)
+    ds_scaled = 10 * (ds - ds_min) / (ds_max - ds_min)
+
+    # 3. 結果をDataFrameにまとめる
+    df_rank = pd.DataFrame({
+        'name': df_aggresion.index,
+        'davids_score': ds_scaled
+    }).sort_values('davids_score', ascending=True) # グラフ用に昇順
+
+    # 性別情報の結合
+    df_rank = pd.merge(df_rank, df_attr[['name', 'sex']], on='name', how='left')
+
+    # 4. グラフ作成 (monkey_rank.png 風)
+    fig_rank, ax_rank = plt.subplots(figsize=(6, 10))
+
+    colors = df_rank['sex'].map({'f': 'orange', 'm': 'steelblue'}).fillna('gray')
+
+    # ドットプロットの描画
+    ax_rank.hlines(y=df_rank['name'], xmin=0, xmax=10, color='lightgray', linestyle='--', alpha=0.5)
+    ax_rank.scatter(df_rank['davids_score'], df_rank['name'], c=colors, s=100, edgecolors='black', zorder=3)
+
+    ax_rank.set_xlabel("David's Score (Dominance Index: 0-10)")
+    ax_rank.set_title("Dominance Hierarchy based on Aggression")
+    ax_rank.set_xlim(-0.5, 10.5)
+    ax_rank.grid(axis='x', linestyle=':', alpha=0.7)
+
+    plt.show()
     return
 
 
