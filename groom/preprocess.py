@@ -1,5 +1,7 @@
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 
 
@@ -106,8 +108,8 @@ class DataCleaner:
         df = df.copy()
 
         # 1. 必要な列だけに絞って処理を行い、FutureWarningを回避
-        # applyに全ての列を渡さず、'behaviour'列のみを対象にします
-        grouped_bh = df.groupby('sampling_id')['behaviour']
+        # applyに全ての列を渡さず、'behavior'列のみを対象にします
+        grouped_bh = df.groupby('sampling_id')['behavior']
 
         # --- A. groomer <-> groomee の変化があったか ---
         def check_role_swap(series):
@@ -149,3 +151,88 @@ class DataCleaner:
             df = df.drop(columns=['is_initial_behavior'])
         
         return df
+    
+
+
+    def add_temperature_delta(self, df):
+        """
+        sampling_idごとにループを回し、開始点を0秒/0度とした変化量を計算する。
+        """
+        # SettingWithCopyWarningを避けるためコピーを作成
+        df = df.copy()
+        
+        # 1. 温度列を数値型に変換（前処理）
+        df['facetemp'] = pd.to_numeric(df['facetemp'], errors='coerce')
+        df['nosetemp'] = pd.to_numeric(df['nosetemp'], errors='coerce')
+        
+        # 結果を格納するリスト
+        processed_chunks = []
+    
+        # 2. sampling_id ごとにグループ化して処理
+        for sid, group in df.groupby('sampling_id'):
+            # 時間順にソート（基準点を正しく取得するため）
+            group = group.sort_values('datetime')
+            
+            # 基準となる「最初の行（t0）」の値を取得
+            t0 = group['datetime'].iloc[0]
+            f0 = group['facetemp'].iloc[0]
+            n0 = group['nosetemp'].iloc[0]
+            
+            # --- 経過時間の計算（秒数に変換） ---
+            # (現在時刻 - 開始時刻) の差分から、トータルの秒数を抽出
+            group['delta_time'] = (group['datetime'] - t0).dt.total_seconds()
+            
+            # --- 温度変化の計算 ---
+            group['delta_face'] = group['facetemp'] - f0
+            group['delta_nose'] = group['nosetemp'] - n0
+            
+            processed_chunks.append(group)
+    
+        # 3. 全てのグループを一つに結合
+        new_df = pd.concat(processed_chunks).reset_index(drop=True)
+    
+        # 4. 不要になった元の温度列を削除
+        new_df = new_df.drop(columns=['facetemp', 'nosetemp'])
+    
+        # 5. 列の配置を調整
+        current_cols = new_df.columns.tolist()
+        if 'datetime' in current_cols:
+            insert_idx = current_cols.index('datetime') + 1
+            delta_cols = ['delta_time', 'delta_face', 'delta_nose']
+            other_cols = [c for c in current_cols if c not in delta_cols]
+            final_cols = other_cols[:insert_idx] + delta_cols + other_cols[insert_idx:]
+            new_df = new_df[final_cols]
+    
+        return new_df
+    
+    
+    
+    def plot_behavior_scatter(self, df, y_column, x_column='delta_time', hue_column='behavior'):
+        """
+        指定されたデータフレームから散布図を作成する関数。
+
+        Parameters:
+        df (pd.DataFrame): データセット
+        y_column (str): 縦軸にするカラム名 ('delta_face' や 'delta_nose')
+        x_column (str): 横軸にするカラム名 (デフォルトは 'delta_time')
+        hue_column (str): 色分けの基準とするカラム名 (デフォルトは 'behavior')
+        """
+        plt.figure(figsize=(10, 6))
+
+        # seabornのscatterplotを使用すると、behaviorごとの色分けが自動で行われます
+        sns.scatterplot(
+            data=df, 
+            x=x_column, 
+            y=y_column, 
+            hue=hue_column, 
+            palette='viridis',  # 色合いの設定（お好みで変更可能）
+            alpha=0.7           # 点の透明度
+        )
+
+        plt.title(f'Time Series Analysis:Scatter plot of {y_column}')
+        plt.xlabel(x_column)
+        plt.ylabel(y_column)
+        plt.legend(title=hue_column, bbox_to_anchor=(1.05, 1), loc='upper left') # 凡例を外側に配置
+        plt.grid(True, linestyle='--', alpha=0.6)
+        plt.tight_layout()
+        plt.show()
