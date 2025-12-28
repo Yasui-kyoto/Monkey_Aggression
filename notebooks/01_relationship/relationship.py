@@ -1,120 +1,73 @@
 import marimo
 
-__generated_with = "0.18.4"
-app = marimo.App(width="medium")
-
-
-@app.cell(hide_code=True)
-def _(mo):
-    mo.md(r"""
-    # 個体間関係の推察
-    """)
-    return
+__generated_with = "0.10.14" # バージョンは任意
+app = marimo.App()
 
 
 @app.cell
-def _():
-    import marimo as mo
+def __():
     import pandas as pd
     import networkx as nx
     import matplotlib.pyplot as plt
     import numpy as np
-    return mo, nx, pd, plt
-
-
-@app.cell(hide_code=True)
-def _(mo):
-    mo.md(r"""
-    ## グルーミング
-    """)
-    return
+    import marimo as mo
+    return mo, nx, pd, plt, np
 
 
 @app.cell
-def _(mo):
-    mo.md(r"""
-    ### 1. データの読み込み
-    """)
-    return
+def __(pd):
+    # パス設定
+    path_matrix = r"C:\Users\yyu33\Downloads\Monkey_Aggression\data\Kojima_gr_combination.csv"
+    path_attr = r"C:\Users\yyu33\Downloads\Monkey_Aggression\data\monkey_data.csv"
+    
+    df_matrix = pd.read_csv(path_matrix, index_col=0)
+    df_attr = pd.read_csv(path_attr)
+    return df_attr, df_matrix
 
 
 @app.cell
-def _(pd):
-    # CSVの1列目をインデックス（起点個体）として読み込みます
-    df = pd.read_csv("data/Kojima_gr_combination.csv", index_col=0)
-    return (df,)
-
-
-@app.cell(hide_code=True)
-def _(mo):
-    mo.md(r"""
-    ### 2. 有向グラフの構築 (有向グラフ: Directed Graph)
-    """)
-    return
-
-
-@app.cell
-def _(df, nx, pd):
+def __(df_attr, df_matrix, mo, nx, plt):
+    # グラフ構築
     G = nx.DiGraph()
-
-    # データフレームをループしてエッジ（つながり）を追加
-    for actor in df.index:
-        for receiver in df.columns:
-            weight = df.loc[actor, receiver]
-            if pd.notna(weight) and weight > 0:
+    for actor in df_matrix.index:
+        for receiver in df_matrix.columns:
+            weight = df_matrix.loc[actor, receiver]
+            if not plt.np.isnan(weight) and weight > 0:
                 G.add_edge(actor, receiver, weight=float(weight))
-    return (G,)
 
+    # 性別色分け
+    node_colors = []
+    for node in G.nodes():
+        row = df_attr[df_attr['name'] == node]
+        if not row.empty:
+            sex = row.iloc[0]['sex']
+            node_colors.append('orange' if sex == 'f' else 'steelblue' if sex == 'm' else 'gray')
+        else:
+            node_colors.append('gray')
 
-@app.cell(hide_code=True)
-def _(mo):
-    mo.md(r"""
-    ### 3. 各種指標の計算（Rのigraphに近い算出）
-    """)
-    return
-
-
-@app.cell
-def _(G):
-    # ノードサイズ：重み付きの次数（Weighted Strength = グルーミング頻度の合計）
+    # 描画
+    fig, ax = plt.subplots(figsize=(10, 8))
+    pos = nx.circular_layout(G)
+    
     node_strength = dict(G.degree(weight='weight'))
-    # 中心性：固有ベクトル中心性など（オプション）
-    # centrality = nx.eigenvector_centrality_numpy(G, weight='weight')
-    return (node_strength,)
+    node_sizes = [node_strength[n] * 300 for n in G.nodes()]
+    edge_widths = [G[u][v]['weight'] * 1.5 for u, v in G.edges()]
 
-
-@app.cell(hide_code=True)
-def _(mo):
-    mo.md(r"""
-    ### 4. レイアウトと描画設定
-    """)
-    return
+    nx.draw_networkx_nodes(G, pos, node_color=node_colors, node_size=node_sizes, alpha=0.8, edgecolors='white', ax=ax)
+    nx.draw_networkx_edges(G, pos, width=edge_widths, edge_color='gray', alpha=0.3, arrowsize=15, connectionstyle='arc3,rad=0.1', ax=ax)
+    nx.draw_networkx_labels(G, pos, font_size=9)
+    
+    ax.set_title("Grooming Network")
+    ax.axis('off')
+    
+    # marimoで表示
+    display_output = mo.as_html(fig)
+    return G, display_output
 
 
 @app.cell
-def _(G, mo, node_strength, nx, plt):
-    plt.figure(figsize=(12, 10))
-    pos = nx.circular_layout(G)  # 円状レイアウト
-
-    # エッジの太さを重みに応じて調整
-    weights = [G[u][v]['weight'] for u, v in G.edges()]
-    edge_widths = [w * 1.5 for w in weights]  # 見映えのために係数を掛ける
-
-    # ノードのサイズをStrengthに基づいて調整
-    node_sizes = [node_strength[node] * 300 for node in G.nodes()]
-
-    # 描画の実行
-    nx.draw_networkx_nodes(G, pos, node_size=node_sizes, node_color='orange', alpha=0.8)
-    nx.draw_networkx_edges(G, pos, width=edge_widths, edge_color='gray', 
-                           alpha=0.5, arrowsize=15, connectionstyle='arc3,rad=0.1')
-    nx.draw_networkx_labels(G, pos, font_size=10, font_family='sans-serif')
-
-    plt.title("Grooming Network (Kojima Group)", fontsize=15)
-    plt.axis('off')
-
-    # Marimoで表示するための出力
-    chart = plt.gca()
-    mo.as_html(chart)
+def __(display_output):
+    display_output
     return
 
 
