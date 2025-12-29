@@ -355,70 +355,63 @@ class DataCleaner:
 
         plt.tight_layout()
         plt.show()
-        
-        
-
-    def filter_by_shade_consistency(self, df, threshold=0.9):
-        """
-        sampling_idごとにshadeの一貫性をチェックし、
-        支配的なshade状態がthreshold（デフォルト90%）未満のサンプルを除外する。
-        """
-        # フィルタリング前のサンプル数を記録
-        before_df = df.copy()
-        
-        # sampling_idごとに、最も頻繁に現れるshadeの割合を計算
-        def check_consistency(group):
-            # 各shadeの状態（yes/no）の出現回数をカウント
-            counts = group['shade'].value_counts(normalize=True)
-            # 最大の割合（最も支配的な状態の割合）を返す
-            return counts.max() >= threshold
-
-        # 条件を満たすsampling_idを特定
-        consistent_ids = df.groupby('sampling_id').apply(
-            lambda x: check_consistency(x), include_groups=False
-        )
-        valid_ids = consistent_ids[consistent_ids].index
-        
-        # フィルタリングの実行
-        filtered_df = df[df['sampling_id'].isin(valid_ids)].copy()
-        
-        return filtered_df
-    
 
 
-    def plot_behavior_shade_comparison(self, df, target_behavior='BL', y_column='delta_face', threshold=0.9):
+
+    def assign_shade_condition(self, df, threshold=0.9):
         """
-        特定のbehaviorにおいて、常に日向(no)のサンプルと常に日陰(yes)のサンプルを比較プロットする。
+        sampling_idごとにshadeの状態を判定し、'shade_condition'列を追加する。
+        判定基準: 指定割合以上が 'yes' なら 'yes'、'no' なら 'no'、それ以外は 'mixed'
         """
-        # 1. 特定のbehaviorで絞り込み
-        b_df = df[df['behavior'] == target_behavior].copy()
-        
-        if b_df.empty:
-            print(f"Behavior '{target_behavior}' のデータが存在しません。")
-            return
-    
-        # 2. 各サンプルの支配的なshadeを判定
         def get_dominant_shade(group):
             counts = group['shade'].value_counts(normalize=True)
             if counts.max() >= threshold:
-                return counts.idxmax() # 'yes' か 'no' を返す
+                return counts.idxmax()  # 'yes' または 'no'
             else:
-                return 'mixed' # 混合サンプル
-    
-        # 各IDの環境ラベルを作成
-        shade_labels = b_df.groupby('sampling_id').apply(
+                return 'mixed'
+
+        # mapping用の辞書を作成
+        shade_labels = df.groupby('sampling_id').apply(
             lambda x: get_dominant_shade(x), include_groups=False
         ).to_dict()
         
-        # 元のデータフレームにラベルをマップ
-        b_df['shade_condition'] = b_df['sampling_id'].map(shade_labels)
+        # 列を追加
+        df['shade_condition'] = df['sampling_id'].map(shade_labels)
+        return df
     
-        # 3. 'mixed' を除外し、比較用のプロットを作成
-        plot_df = b_df[b_df['shade_condition'] != 'mixed']
+    
+    
+    def filter_by_shade_consistency(self, df):
+        """
+        shade_conditionが 'mixed' ではない（一貫している）サンプルのみを抽出する。
+        """
+        # まだ判定が行われていない場合は実行（念のため）
+        if 'shade_condition' not in df.columns:
+            df = self.assign_shade_condition(df)
+            
+        before_count = df['sampling_id'].nunique()
         
+        # 'mixed' 以外をフィルタリング
+        filtered_df = df[df['shade_condition'] != 'mixed'].copy()
+        
+        return filtered_df
+
+
+
+    def plot_behavior_shade_comparison(self, df, target_behavior='BL', y_column='delta_face'):
+        """
+        shade_condition列を使用して、日向と日陰の比較プロットを作成する。
+        """
+        # 特定のbehaviorで絞り込み、かつmixedを除外
+        plot_df = df[(df['behavior'] == target_behavior) & 
+                     (df['shade_condition'] != 'mixed')].copy()
+        
+        if plot_df.empty:
+            print(f"条件に合致するデータが存在しません（behavior: {target_behavior}）")
+            return
+    
         plt.figure(figsize=(10, 6))
         
-        # 日向=オレンジ, 日陰=青系の色使い
         shade_palette = {'no': '#ff7c00', 'yes': '#023eff'}
         shade_names = {'no': 'Always Sun (no)', 'yes': 'Always Shadow (yes)'}
     
@@ -431,7 +424,7 @@ class DataCleaner:
             alpha=0.6
         )
     
-        # 統計情報の取得（サンプル数の確認）
+        # サンプル数の集計
         counts = plot_df.groupby('shade_condition')['sampling_id'].nunique()
         sun_n = counts.get('no', 0)
         sha_n = counts.get('yes', 0)
@@ -442,7 +435,6 @@ class DataCleaner:
         plt.xlabel('Time from the starting point (s)')
         plt.ylabel(f'{position_dict.get(y_column, y_column)} Temperature change (°C)')
         
-        # 凡例のラベルを分かりやすく変更
         handles, labels = plt.gca().get_legend_handles_labels()
         plt.legend(handles, [shade_names.get(l, l) for l in labels], 
                    title='Environment', bbox_to_anchor=(1.05, 1), loc='upper left')
