@@ -207,6 +207,29 @@ class DataCleaner:
     
     
     
+    def print_sample_counts(self, df):
+        """
+        有効な総サンプル数（sampling_idの種類数）と、
+        各behaviorごとのサンプル数を表示する。
+        """
+        # 1. 有効な総サンプル数（sampling_idのユニーク数）
+        total_samples = df['sampling_id'].nunique()
+        
+        print("========== サンプル数集計 ==========")
+        print(f"有効な総サンプル数: {total_samples}")
+        print("------------------------------------")
+        
+        # 2. behaviorごとのサンプル数
+        # behaviorごとにグループ化し、それぞれのグループ内にあるsampling_idのユニーク数をカウント
+        behavior_counts = df.groupby('behavior')['sampling_id'].nunique()
+        
+        print("各behaviorごとのサンプル数:")
+        for behavior, count in behavior_counts.items():
+            print(f"  - {behavior}: {count}")
+        print("====================================")
+    
+    
+    
     def plot_behavior_scatter(self, df, y_column, x_column='delta_time', hue_column='behavior'):
         """
         指定されたデータフレームから散布図を作成する関数。
@@ -218,6 +241,9 @@ class DataCleaner:
         hue_column (str): 色分けの基準とするカラム名 (デフォルトは 'behavior')
         """
         plt.figure(figsize=(10, 6))
+        
+        # behaviorごとの色を固定する辞書（brightパレットの順序に準拠）
+        color_palette = {'BL': '#023eff', 'grooming': '#ff7c00', 'groomed': '#1ac938'}
 
         # seabornのscatterplotを使用すると、behaviorごとの色分けが自動で行われます
         sns.scatterplot(
@@ -225,14 +251,61 @@ class DataCleaner:
             x=x_column, 
             y=y_column, 
             hue=hue_column, 
-            palette='viridis',  # 色合いの設定（お好みで変更可能）
+            palette=color_palette,
             alpha=0.7           # 点の透明度
         )
+        
+        position_dict = {'delta_face': 'Face Temperature', 'delta_nose': 'Nose Temperature'}
 
-        plt.title(f'Time Series Analysis:Scatter plot of {y_column}')
-        plt.xlabel(x_column)
-        plt.ylabel(y_column)
+        plt.title(f'Time Series Analysis:Scatter plot of {position_dict[y_column]} Change')
+        plt.xlabel('Time from the starting point (s)')
+        plt.ylabel('Temperature change (°C)')
         plt.legend(title=hue_column, bbox_to_anchor=(1.05, 1), loc='upper left') # 凡例を外側に配置
+        plt.grid(True, linestyle='--', alpha=0.6)
+        plt.tight_layout()
+        plt.show()
+
+
+
+    def plot_highlight_behavior(self, df, target_behavior, y_column, x_column='delta_time'):
+        """
+        特定のbehaviorだけを色付けし、それ以外を灰色で表示する関数。
+        """
+        plt.figure(figsize=(10, 6))
+        
+        # behaviorごとの色を固定する辞書（brightパレットの順序に準拠）
+        color_palette = {'BL': '#023eff', 'grooming': '#ff7c00', 'groomed': '#1ac938'}
+        
+        # もしリストにないbehaviorが指定された場合のデフォルト色
+        target_color = color_palette.get(target_behavior, 'red')
+
+        # 1. ターゲット以外のデータを灰色でプロット
+        other_df = df[df['behavior'] != target_behavior]
+        sns.scatterplot(
+            data=other_df,
+            x=x_column,
+            y=y_column,
+            color='gray',
+            alpha=0.2,
+            label='Others'
+        )
+
+        # 2. ターゲットのデータだけを色付きで重ねてプロット
+        target_df = df[df['behavior'] == target_behavior]
+        sns.scatterplot(
+            data=target_df,
+            x=x_column,
+            y=y_column,
+            color=target_color, # 固定色を使用
+            alpha=0.8,
+            label=target_behavior
+        )
+
+        position_dict = {'delta_face': 'Face Temperature', 'delta_nose': 'Nose Temperature'}
+        plt.title(f'Highlight: {target_behavior} ({position_dict[y_column]})')
+        plt.xlabel('Time from the starting point (s)')
+        plt.ylabel('Temperature change (°C)')
+        plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
         plt.grid(True, linestyle='--', alpha=0.6)
         plt.tight_layout()
         plt.show()
