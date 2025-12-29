@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+import statsmodels.formula.api as smf
 
 
 
@@ -442,3 +443,47 @@ class DataCleaner:
         plt.grid(True, linestyle='--', alpha=0.6)
         plt.tight_layout()
         plt.show()
+        
+        
+
+    def test_environmental_impact_first_300s(self, df, y_column='delta_nose', limit_time=300):
+        """
+        開始300秒のデータに対し、shade_condition(yes/no)によって
+        温度変化（時系列の傾き）に有意な差があるかを線形混合モデルで検定する。
+        """
+        # 1. データの準備（最初のlimit_time秒のみ抽出、かつmixedを除外）
+        test_df = df[(df['delta_time'] <= limit_time) & 
+                      (df['shade_condition'] != 'mixed')].copy()
+
+        if test_df['shade_condition'].nunique() < 2:
+            print("検定に必要な2つの群（yes, no）がデータ内に不足しています。")
+            return None
+
+        # 2. 線形混合モデルの構築
+        # 固定効果: delta_time, shade_condition, およびその相互作用 (*)
+        # 変量効果: sample_id ごとの切片 (1 | sampling_id)
+        # 式の意味: 温度 ~ 時間 + 環境 + 時間:環境
+        formula = f"{y_column} ~ delta_time * shade_condition"
+
+        model = smf.mixedlm(formula, test_df, groups=test_df["sampling_id"])
+        result = model.fit()
+
+        # 3. 結果の表示
+        print(f"\n========== Mixed-Effects Model Analysis ({y_column}, 0-300s) ==========")
+        print(result.summary())
+
+        # 交互作用（delta_time:shade_condition）のP値を確認
+        # これが 0.05 未満なら、日向と日陰で「温度の変化率（傾き）」に有意差があると言える
+        p_interaction = result.pvalues.get('delta_time:shade_condition[T.yes]', 
+                                           result.pvalues.get('delta_time:shade_condition[T.no]'))
+
+        print("\n---------------------------------------------------------")
+        if p_interaction < 0.05:
+            print(f"結果: 有意差あり (p = {p_interaction:.4f})")
+            print("環境(shade_condition)によって、温度変化の速度に有意な違いが認められます。")
+        else:
+            print(f"結果: 有意差なし (p = {p_interaction:.4f})")
+            print("環境による温度変化速度の有意な違いは見られませんでした。")
+        print("---------------------------------------------------------")
+
+        return result, model
