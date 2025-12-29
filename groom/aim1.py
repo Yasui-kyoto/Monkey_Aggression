@@ -9,6 +9,12 @@ from scipy import stats
 
 class GroomAim1:
     def __init__(self):
+        self.position_dict = {
+            'delta_face': 'Face',
+            'corrected_delta_face': 'Face (Corrected)',
+            'delta_nose': 'Nose',
+            'corrected_delta_nose': 'Nose (Corrected)'
+        }
         pass
     
     
@@ -37,10 +43,8 @@ class GroomAim1:
             palette=color_palette,
             alpha=0.7           # 点の透明度
         )
-        
-        position_dict = {'delta_face': 'Face Temperature', 'delta_nose': 'Nose Temperature'}
 
-        plt.title(f'Time Series Analysis:Scatter plot of {position_dict[y_column]} Change')
+        plt.title(f'Time Series Analysis:Scatter plot of {self.position_dict[y_column]} Change')
         plt.xlabel('Time from the starting point (s)')
         plt.ylabel('Temperature change (°C)')
         plt.legend(title=hue_column, bbox_to_anchor=(1.05, 1), loc='upper left') # 凡例を外側に配置
@@ -84,8 +88,7 @@ class GroomAim1:
             label=target_behavior
         )
 
-        position_dict = {'delta_face': 'Face Temperature', 'delta_nose': 'Nose Temperature'}
-        plt.title(f'Highlight: {target_behavior} ({position_dict[y_column]})')
+        plt.title(f'Highlight: {target_behavior} ({self.position_dict[y_column]} Temperature)')
         plt.xlabel('Time from the starting point (s)')
         plt.ylabel('Temperature change (°C)')
         plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
@@ -168,16 +171,13 @@ class GroomAim1:
         
 
 
-    def run_cluster_permutation_test(self, df_1s, target_behaviors, y_column='delta_nose', n_permutations=1000, p_threshold=0.05):
+    def run_cluster_permutation_test(self, df_1s, target_behaviors=['grooming', 'groomed'], y_column='delta_nose', n_permutations=1000, p_threshold=0.05):
         """
         有意なクラスターの時間帯を特定して表示する機能を追加したクラスターベース置換検定。
         """
         # behavior
         behavior_a = target_behaviors[0]
         behavior_b = target_behaviors[1]
-        
-        # position (title用)
-        position_dict = {'delta_face': 'Face', 'delta_nose': 'Nose'}
         
         # 1. データの準備
         data_a = df_1s[df_1s['behavior'] == behavior_a]
@@ -273,7 +273,7 @@ class GroomAim1:
         for start_s, end_s in significant_periods:
             plt.axvspan(start_s, end_s, color='yellow', alpha=0.3, label='Significant Window')
 
-        plt.title(f'Cluster-based Permutation Test: {behavior_a} vs {behavior_b} ({position_dict[y_column]})')
+        plt.title(f'Cluster-based Permutation Test: {behavior_a} vs {behavior_b} ({self.position_dict[y_column]})')
         plt.xlabel('Time (s)')
         plt.ylabel('t-statistic')
         # 重複する凡例を避ける
@@ -285,9 +285,53 @@ class GroomAim1:
         plt.show()
         
         
+        
+    def _get_bl_trend(self, interpolated_df, y_column='delta_nose'):
+        """
+        BL（基準）行動の各秒における平均値を抽出する関数。
+        """
+        bl_data = interpolated_df[interpolated_df['behavior'] == 'BL']
+        
+        # 秒ごとの平均値を計算
+        bl_trend = bl_data.groupby('delta_time')[y_column].mean()
+        
+        return bl_trend
+    
+    
+
+    def apply_baseline_correction(self, interpolated_df, y_columns=['delta_nose', 'delta_face']):
+        """
+        各群の値を、同じ時刻のBL平均値で差し引いて補正する関数。
+        新しい列 'corrected_delta_nose' などを作成したDataFrameを返す。
+        """
+        df_corr = interpolated_df.copy()
+        
+        for col in y_columns:
+            # BLトレンドの取得
+            bl_trend = self._get_bl_trend(df_corr, y_column=col)
+            
+            # 各行のdelta_timeに対応するBL平均値をマッピングして差し引く
+            # mapを使うことで高速に処理できます
+            df_corr[f'corrected_{col}'] = df_corr[col] - df_corr['delta_time'].map(bl_trend)
+            
+        print(f"補正が完了しました。新しく追加された列: {[f'corrected_{c}' for c in y_columns]}")
+        return df_corr
+        
+        
  
         
 class GroomAim1LinearTests:
+    def __init__(self):
+        self.position_dict = {
+            'delta_face': 'Face',
+            'corrected_delta_face': 'Face (Corrected)',
+            'delta_nose': 'Nose',
+            'corrected_delta_nose': 'Nose (Corrected)'
+        }
+        pass
+    
+    
+    
     def test_behavior_pair_comparison(self, df, behavior_a, behavior_b, y_column='delta_nose'):
         """
         指定した2つのbehavior間で、温度変化の傾きに有意差があるかを線形混合モデルで検定する。
@@ -378,10 +422,9 @@ class GroomAim1LinearTests:
                 line_kws={'linestyle': '--', 'linewidth': 3} # 太めの点線で強調
             )
 
-        position_dict = {'delta_face': 'Face', 'delta_nose': 'Nose'}
         plt.title(f'Trend Comparison: {behavior_a} vs {behavior_b}\n(Linear Regression & 95% CI)')
         plt.xlabel('Time from the starting point (s)')
-        plt.ylabel(f'{position_dict.get(y_column, y_column)} Temperature change (°C)')
+        plt.ylabel(f'{self.position_dict.get(y_column, y_column)} Temperature change (°C)')
         plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
         plt.grid(True, linestyle=':', alpha=0.6)
         plt.tight_layout()
@@ -426,9 +469,8 @@ class GroomAim1LinearTests:
             jitter=True # 点が重ならないように少し左右に散らす
         )
 
-        position_dict = {'delta_face': 'Face', 'delta_nose': 'Nose'}
-        plt.title(f'Final {position_dict.get(y_column, y_column)} Temperature Change\n(Last point of each sample)')
-        plt.ylabel(f'{position_dict.get(y_column, y_column)} Delta (°C)')
+        plt.title(f'Final {self.position_dict.get(y_column, y_column)} Temperature Change\n(Last point of each sample)')
+        plt.ylabel(f'{self.position_dict.get(y_column, y_column)} Delta (°C)')
         plt.grid(True, axis='y', linestyle=':', alpha=0.6)
 
         plt.tight_layout()
