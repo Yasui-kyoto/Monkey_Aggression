@@ -91,3 +91,151 @@ class GroomAim1:
         plt.grid(True, linestyle='--', alpha=0.6)
         plt.tight_layout()
         plt.show()
+        
+
+
+    def test_behavior_pair_comparison(self, df, behavior_a, behavior_b, y_column='delta_nose'):
+        """
+        指定した2つのbehavior間で、温度変化の傾きに有意差があるかを線形混合モデルで検定する。
+        """
+        # 1. 比較対象の2群のみを抽出
+        test_df = df[df['behavior'].isin([behavior_a, behavior_b])].copy()
+
+        # 2. 混合モデルの実行（behaviorをカテゴリカル変数として扱う）
+        # 固定効果: delta_time, behavior, およびその相互作用
+        # 変量効果: sampling_id ごとの切片
+        formula = f"{y_column} ~ delta_time * behavior"
+
+        try:
+            model = smf.mixedlm(formula, test_df, groups=test_df["sampling_id"])
+            result = model.fit()
+
+            print(f"\n========== Pairwise Comparison: {behavior_a} vs {behavior_b} ({y_column}) ==========")
+
+            # 相互作用項（delta_time:behavior[...]）のインデックス名を探す
+            interaction_term = [idx for idx in result.pvalues.index if 'delta_time:behavior' in idx]
+
+            if interaction_term:
+                term = interaction_term[0]
+                p_val = result.pvalues[term]
+                coef = result.params[term]
+
+                print(f"Comparison: {behavior_a} と {behavior_b} の傾きの差")
+                print(f"Interaction Coef (Diff in Slope): {coef:.6f}")
+                print(f"P-value: {p_val:.4f}")
+
+                print("---------------------------------------------------------")
+                if p_val < 0.05:
+                    print(f"結果: ★ 有意な差があります。")
+                elif p_val < 0.1:
+                    print(f"結果: △ 有意な傾向があります。")
+                else:
+                    print(f"結果: 有意な差は認められませんでした。")
+                print("---------------------------------------------------------")
+            else:
+                print("交互作用項の算出に失敗しました。")
+
+            return result
+
+        except Exception as e:
+            print(f"モデルの実行中にエラーが発生しました: {e}")
+            return None
+        
+        
+
+    def plot_behavior_trend_comparison(self, df, behavior_a, behavior_b, y_column='delta_nose'):
+        """
+        2つの行動の温度変化の『勢い（傾き）』の差を可視化する。
+        生データではなく、平均的なトレンドと回帰直線を表示。
+        """
+        # 1. 比較対象の2群を抽出
+        plot_df = df[df['behavior'].isin([behavior_a, behavior_b])].copy()
+
+        plt.figure(figsize=(10, 6))
+
+        # 2. カラーパレットの設定（これまでの設定に準拠）
+        color_palette = {'BL': '#023eff', 'grooming': '#ff7c00', 'groomed': '#1ac938'}
+
+        # 3. 平均トレンドの描画 (Confidence Interval 95% を影として表示)
+        # これにより、個別の点のバラつきを「平均的な帯」として整理できます
+        sns.lineplot(
+            data=plot_df,
+            x='delta_time',
+            y=y_column,
+            hue='behavior',
+            palette=color_palette,
+            errorbar=('ci', 95), # 95%信頼区間を影で表示
+            alpha=0.4,
+            linewidth=1,
+            legend=True
+        )
+
+        # 4. 回帰直線（傾きそのもの）を重ね書き
+        # 検定が「傾き」を見ているので、これこそが「統計学的に見えている線」です
+        for beh in [behavior_a, behavior_b]:
+            subset = plot_df[plot_df['behavior'] == beh]
+            sns.regplot(
+                data=subset,
+                x='delta_time',
+                y=y_column,
+                scatter=False,    # 点は描かない
+                color=color_palette.get(beh),
+                label=f'{beh} Regression Line',
+                line_kws={'linestyle': '--', 'linewidth': 3} # 太めの点線で強調
+            )
+
+        position_dict = {'delta_face': 'Face', 'delta_nose': 'Nose'}
+        plt.title(f'Trend Comparison: {behavior_a} vs {behavior_b}\n(Linear Regression & 95% CI)')
+        plt.xlabel('Time from the starting point (s)')
+        plt.ylabel(f'{position_dict.get(y_column, y_column)} Temperature change (°C)')
+        plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+        plt.grid(True, linestyle=':', alpha=0.6)
+        plt.tight_layout()
+        plt.show()
+        
+        
+        
+    def plot_final_delta_comparison(self, df, y_column='delta_nose'):
+        """
+        各サンプルの『最終的な温度変化量』だけを取り出して比較する。
+        """
+        # 各サンプリングIDの最後のデータポイントだけを抽出
+        final_points = df.sort_values('delta_time').groupby('sampling_id').last().reset_index()
+        
+        # 色の設定（これまでの散布図と統一）
+        color_palette = {'BL': '#023eff', 'grooming': '#ff7c00', 'groomed': '#1ac938'}
+        
+        plt.figure(figsize=(8, 6))
+        
+        # 1. 箱ひげ図 (アウトライヤーは表示しない設定: showfliers=False)
+        # なぜなら、下のstripplotですべての生データを打点するため。
+        sns.boxplot(
+            data=final_points, 
+            x='behavior', 
+            y=y_column, 
+            order=['BL', 'groomed', 'grooming'], # 順番を固定
+            palette=color_palette,
+            showfliers=False,
+            boxprops=dict(alpha=0.3) # 箱を少し薄くして点を見やすくする
+        )
+        
+        # 2. 生データ（個々のサンプリングIDの最終値）の打点
+        # これが「●」になります
+        sns.stripplot(
+            data=final_points, 
+            x='behavior', 
+            y=y_column, 
+            order=['BL', 'groomed', 'grooming'],
+            palette=color_palette,
+            size=6,
+            alpha=0.7,
+            jitter=True # 点が重ならないように少し左右に散らす
+        )
+        
+        position_dict = {'delta_face': 'Face', 'delta_nose': 'Nose'}
+        plt.title(f'Final {position_dict.get(y_column, y_column)} Temperature Change\n(Last point of each sample)')
+        plt.ylabel(f'{position_dict.get(y_column, y_column)} Delta (°C)')
+        plt.grid(True, axis='y', linestyle=':', alpha=0.6)
+        
+        plt.tight_layout()
+        plt.show()
