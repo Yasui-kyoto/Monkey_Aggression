@@ -91,9 +91,84 @@ class GroomAim1:
         plt.grid(True, linestyle='--', alpha=0.6)
         plt.tight_layout()
         plt.show()
+
+
+
+    def interpolate_samples(self, df, time_limit=300):
+        """
+        全サンプルを1秒単位で線形補間し、解析用のベースデータを作成する。
+        """
+        interpolated_list = []
+
+        print(f"Interpolating {df['sampling_id'].nunique()} samples...")
+
+        for sid, group in df.groupby('sampling_id'):
+            new_index = np.arange(0, time_limit + 1)
+            temp_group = group.drop_duplicates(subset='delta_time').set_index('delta_time')
+
+            # 器の作成と数値補間
+            resampled = temp_group.reindex(new_index)
+            resampled = resampled.infer_objects(copy=False)
+            resampled = resampled.interpolate(method='linear')
+            
+            # 非数値列の補完（前後埋め）
+            resampled = resampled.ffill().bfill()
+            
+            resampled['sampling_id'] = sid
+            resampled.index.name = 'delta_time'
+            interpolated_list.append(resampled.reset_index())
+
+        full_df = pd.concat(interpolated_list).reset_index(drop=True)
+        print("Interpolation completed.")
+        return full_df
+    
+    
+    
+    def plot_smoothed_behavior_comparison(self, interpolated_df, y_column='delta_nose', target_behaviors=None):
+        """
+        内挿済みデータを使用して帯プロットを作成する。
+        target_behaviors: ['BL', 'grooming'] のように指定するとそのペアのみプロット。
+        """
+        plot_df = interpolated_df.copy()
+
+        # 特定のペアのみに絞り込むオプション
+        if target_behaviors:
+            plot_df = plot_df[plot_df['behavior'].isin(target_behaviors)]
+
+        if plot_df.empty:
+            print("指定された行動のデータが存在しません。")
+            return
+
+        plt.figure(figsize=(10, 6))
         
+        # 色指定（これまでの設定を維持）
+        color_palette = {'BL': '#023eff', 'grooming': '#ff7c00', 'groomed': '#1ac938'}
 
+        # 信頼区間（帯）の描画
+        sns.lineplot(
+            data=plot_df,
+            x='delta_time',
+            y=y_column,
+            hue='behavior',
+            palette=color_palette,
+            errorbar=('ci', 95),
+            n_boot=500
+        )
 
+        title_suffix = f"({', '.join(target_behaviors)})" if target_behaviors else "(All Behaviors)"
+        plt.title(f'Temperature Trend {title_suffix}\nInterpolated 1s intervals | {y_column}')
+        plt.xlabel('Time (s)')
+        plt.ylabel('Temperature Change (°C)')
+        plt.grid(True, linestyle='--', alpha=0.5)
+        plt.axhline(0, color='black', linewidth=0.8, linestyle='-')
+
+        plt.tight_layout()
+        plt.show()
+        
+        
+        
+        
+class GroomAim1LinearTests:
     def test_behavior_pair_comparison(self, df, behavior_a, behavior_b, y_column='delta_nose'):
         """
         指定した2つのbehavior間で、温度変化の傾きに有意差があるかを線形混合モデルで検定する。
@@ -201,12 +276,12 @@ class GroomAim1:
         """
         # 各サンプリングIDの最後のデータポイントだけを抽出
         final_points = df.sort_values('delta_time').groupby('sampling_id').last().reset_index()
-        
+
         # 色の設定（これまでの散布図と統一）
         color_palette = {'BL': '#023eff', 'grooming': '#ff7c00', 'groomed': '#1ac938'}
-        
+
         plt.figure(figsize=(8, 6))
-        
+
         # 1. 箱ひげ図 (アウトライヤーは表示しない設定: showfliers=False)
         # なぜなら、下のstripplotですべての生データを打点するため。
         sns.boxplot(
@@ -218,7 +293,7 @@ class GroomAim1:
             showfliers=False,
             boxprops=dict(alpha=0.3) # 箱を少し薄くして点を見やすくする
         )
-        
+
         # 2. 生データ（個々のサンプリングIDの最終値）の打点
         # これが「●」になります
         sns.stripplot(
@@ -231,11 +306,11 @@ class GroomAim1:
             alpha=0.7,
             jitter=True # 点が重ならないように少し左右に散らす
         )
-        
+
         position_dict = {'delta_face': 'Face', 'delta_nose': 'Nose'}
         plt.title(f'Final {position_dict.get(y_column, y_column)} Temperature Change\n(Last point of each sample)')
         plt.ylabel(f'{position_dict.get(y_column, y_column)} Delta (°C)')
         plt.grid(True, axis='y', linestyle=':', alpha=0.6)
-        
+
         plt.tight_layout()
         plt.show()
