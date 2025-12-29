@@ -309,3 +309,144 @@ class DataCleaner:
         plt.grid(True, linestyle='--', alpha=0.6)
         plt.tight_layout()
         plt.show()
+        
+        
+
+    def plot_sample_with_shade_transition(self, df, target_id=19, y_column='delta_nose'):
+        """
+        特定のサンプルの温度変化を折れ線で表示し、背景色でshadeの切り替わりを可視化する。
+        """
+        # 対象のサンプリングIDのみを抽出
+        sample_df = df[df['sampling_id'] == target_id].sort_values('delta_time')
+
+        if sample_df.empty:
+            print(f"Sampling ID {target_id} はデータ内に存在しません。")
+            return
+
+        plt.figure(figsize=(12, 6))
+        ax = plt.gca()
+
+        # 1. 背景にshadeのエリアを色付け
+        # shadeが 'yes' (日陰) の区間を薄い青、 'no' (日向) の区間を薄いオレンジなどで塗る
+        times = sample_df['delta_time'].values
+        shades = sample_df['shade'].values
+
+        # 区間ごとに背景色を塗るループ
+        for i in range(len(times) - 1):
+            color = 'skyblue' if shades[i] == 'yes' else 'orange'
+            ax.axvspan(times[i], times[i+1], color=color, alpha=0.2)
+
+        # 2. 温度変化を折れ線グラフでプロット
+        plt.plot(sample_df['delta_time'], sample_df[y_column], 
+                 marker='o', markersize=4, color='black', linewidth=1.5, label=y_column)
+
+        # 凡例用のダミー（背景色の説明用）
+        from matplotlib.lines import Line2D
+        custom_lines = [Line2D([0], [0], color='skyblue', lw=4, alpha=0.3),
+                        Line2D([0], [0], color='orange', lw=4, alpha=0.3),
+                        Line2D([0], [0], color='black', lw=1.5, marker='o')]
+        ax.legend(custom_lines, ['Shade: yes (Shadow)', 'Shade: no (Sun)', y_column], loc='upper left')
+
+        position_dict = {'delta_face': 'Face', 'delta_nose': 'Nose'}
+        plt.title(f'Sample ID {target_id}: {position_dict.get(y_column, y_column)} Temp Change vs Shade Transition')
+        plt.xlabel('Time from start (s)')
+        plt.ylabel('Temperature change (°C)')
+        plt.grid(True, linestyle=':', alpha=0.5)
+
+        plt.tight_layout()
+        plt.show()
+        
+        
+
+    def filter_by_shade_consistency(self, df, threshold=0.9):
+        """
+        sampling_idごとにshadeの一貫性をチェックし、
+        支配的なshade状態がthreshold（デフォルト90%）未満のサンプルを除外する。
+        """
+        # フィルタリング前のサンプル数を記録
+        before_df = df.copy()
+        
+        # sampling_idごとに、最も頻繁に現れるshadeの割合を計算
+        def check_consistency(group):
+            # 各shadeの状態（yes/no）の出現回数をカウント
+            counts = group['shade'].value_counts(normalize=True)
+            # 最大の割合（最も支配的な状態の割合）を返す
+            return counts.max() >= threshold
+
+        # 条件を満たすsampling_idを特定
+        consistent_ids = df.groupby('sampling_id').apply(
+            lambda x: check_consistency(x), include_groups=False
+        )
+        valid_ids = consistent_ids[consistent_ids].index
+        
+        # フィルタリングの実行
+        filtered_df = df[df['sampling_id'].isin(valid_ids)].copy()
+        
+        return filtered_df
+    
+
+
+    def plot_behavior_shade_comparison(self, df, target_behavior='BL', y_column='delta_face', threshold=0.9):
+        """
+        特定のbehaviorにおいて、常に日向(no)のサンプルと常に日陰(yes)のサンプルを比較プロットする。
+        """
+        # 1. 特定のbehaviorで絞り込み
+        b_df = df[df['behavior'] == target_behavior].copy()
+        
+        if b_df.empty:
+            print(f"Behavior '{target_behavior}' のデータが存在しません。")
+            return
+    
+        # 2. 各サンプルの支配的なshadeを判定
+        def get_dominant_shade(group):
+            counts = group['shade'].value_counts(normalize=True)
+            if counts.max() >= threshold:
+                return counts.idxmax() # 'yes' か 'no' を返す
+            else:
+                return 'mixed' # 混合サンプル
+    
+        # 各IDの環境ラベルを作成
+        shade_labels = b_df.groupby('sampling_id').apply(
+            lambda x: get_dominant_shade(x), include_groups=False
+        ).to_dict()
+        
+        # 元のデータフレームにラベルをマップ
+        b_df['shade_condition'] = b_df['sampling_id'].map(shade_labels)
+    
+        # 3. 'mixed' を除外し、比較用のプロットを作成
+        plot_df = b_df[b_df['shade_condition'] != 'mixed']
+        
+        plt.figure(figsize=(10, 6))
+        
+        # 日向=オレンジ, 日陰=青系の色使い
+        shade_palette = {'no': '#ff7c00', 'yes': '#023eff'}
+        shade_names = {'no': 'Always Sun (no)', 'yes': 'Always Shadow (yes)'}
+    
+        sns.scatterplot(
+            data=plot_df,
+            x='delta_time',
+            y=y_column,
+            hue='shade_condition',
+            palette=shade_palette,
+            alpha=0.6
+        )
+    
+        # 統計情報の取得（サンプル数の確認）
+        counts = plot_df.groupby('shade_condition')['sampling_id'].nunique()
+        sun_n = counts.get('no', 0)
+        sha_n = counts.get('yes', 0)
+    
+        position_dict = {'delta_face': 'Face', 'delta_nose': 'Nose'}
+        plt.title(f'Environmental Impact on {target_behavior}\n'
+                  f'Sun (n={sun_n}) vs Shadow (n={sha_n})')
+        plt.xlabel('Time from the starting point (s)')
+        plt.ylabel(f'{position_dict.get(y_column, y_column)} Temperature change (°C)')
+        
+        # 凡例のラベルを分かりやすく変更
+        handles, labels = plt.gca().get_legend_handles_labels()
+        plt.legend(handles, [shade_names.get(l, l) for l in labels], 
+                   title='Environment', bbox_to_anchor=(1.05, 1), loc='upper left')
+        
+        plt.grid(True, linestyle='--', alpha=0.6)
+        plt.tight_layout()
+        plt.show()
