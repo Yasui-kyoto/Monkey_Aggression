@@ -3,6 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import statsmodels.formula.api as smf
+from scipy import stats
 
 
 
@@ -165,8 +166,126 @@ class GroomAim1:
         plt.tight_layout()
         plt.show()
         
+
+
+    def run_cluster_permutation_test(self, df_1s, target_behaviors, y_column='delta_nose', n_permutations=1000, p_threshold=0.05):
+        """
+        有意なクラスターの時間帯を特定して表示する機能を追加したクラスターベース置換検定。
+        """
+        # behavior
+        behavior_a = target_behaviors[0]
+        behavior_b = target_behaviors[1]
+        
+        # position (title用)
+        position_dict = {'delta_face': 'Face', 'delta_nose': 'Nose'}
+        
+        # 1. データの準備
+        data_a = df_1s[df_1s['behavior'] == behavior_a]
+        data_b = df_1s[df_1s['behavior'] == behavior_b]
+        times = sorted(df_1s['delta_time'].unique())
+        
+        def create_matrix(sub_df):
+            matrix = sub_df.pivot(index='sampling_id', columns='delta_time', values=y_column)
+            return matrix.dropna().values
+
+        matrix_a = create_matrix(data_a)
+        matrix_b = create_matrix(data_b)
+        
+        if len(matrix_a) < 3 or len(matrix_b) < 3:
+            print("サンプル数が少なすぎるため、検定をスキップします。")
+            return None
+
+        # 2. 実データの t値計算とクラスター特定
+        t_obs, p_obs = stats.ttest_ind(matrix_a, matrix_b, axis=0)
+        df_degree = len(matrix_a) + len(matrix_b) - 2
+        thresh_t = stats.t.ppf(1 - p_threshold / 2, df_degree)
+        
+        # クラスターの情報を保持する関数（開始・終了時間も記録）
+        def find_clusters(t_values, threshold_t):
+            clusters = []
+            current_indices = []
+            for i, t in enumerate(t_values):
+                if abs(t) > threshold_t:
+                    current_indices.append(i)
+                else:
+                    if current_indices:
+                        clusters.append(current_indices)
+                        current_indices = []
+            if current_indices:
+                clusters.append(current_indices)
+            return clusters
+
+        obs_clusters = find_clusters(t_obs, thresh_t)
+        # 各クラスターのt値合計の絶対値を計算
+        obs_cluster_stats = [np.abs(np.sum(t_obs[c])) for c in obs_clusters]
+        obs_max_cluster = np.max(obs_cluster_stats) if obs_cluster_stats else 0
+
+        # 3. 置換検定（帰無分布の作成）
+        print(f"Running {n_permutations} permutations...")
+        combined_matrix = np.vstack([matrix_a, matrix_b])
+        n_a = len(matrix_a)
+        null_max_clusters = []
+
+        for _ in range(n_permutations):
+            indices = np.random.permutation(len(combined_matrix))
+            t_rand, _ = stats.ttest_ind(combined_matrix[indices[:n_a]], combined_matrix[indices[n_a:]], axis=0)
+            
+            # シャッフル時の最大クラスター統計量を記録
+            rand_clusters = find_clusters(t_rand, thresh_t)
+            rand_stats = [np.abs(np.sum(t_rand[c])) for c in rand_clusters]
+            null_max_clusters.append(np.max(rand_stats) if rand_stats else 0)
+
+        # 4. 各クラスターごとにP値を計算 ---
+        print(f"\n--- Cluster-based Permutation Result: {behavior_a} vs {behavior_b} ---")
+        
+        # 帰無分布（null_max_clusters）はステップ4で作成したものを使用
+        null_dist = np.array(null_max_clusters)
+        
+        significant_periods = []
+        
+        if len(obs_clusters) == 0:
+            print("有意なクラスターは検出されませんでした。")
+        else:
+            for i, c_indices in enumerate(obs_clusters):
+                # この個別のクラスターの合計値が、シャッフル時の「最大値分布」の中で何％の位置にあるか
+                c_stat = obs_cluster_stats[i]
+                c_p_value = np.sum(null_dist >= c_stat) / n_permutations
+
+                start_s = times[c_indices[0]]
+                end_s = times[c_indices[-1]]
+
+                print(f"Cluster {i+1}: {start_s}s - {end_s}s | Stat: {c_stat:.2f} | p = {c_p_value:.4f}")
+
+                if c_p_value < p_threshold:
+                    print(f"  => ★ 有意 (p < {p_threshold})")
+                    significant_periods.append((start_s, end_s))
+                else:
+                    print(f"  => 有意差なし")
+                
+        print("---------------------------------------------------------")
+
+        # 5. 可視化
+        plt.figure(figsize=(12, 5))
+        plt.plot(times, t_obs, label='Observed t-value', color='black', alpha=0.7)
+        plt.axhline(thresh_t, color='red', linestyle='--', alpha=0.5, label='Threshold')
+        plt.axhline(-thresh_t, color='red', linestyle='--', alpha=0.5)
+        
+        for start_s, end_s in significant_periods:
+            plt.axvspan(start_s, end_s, color='yellow', alpha=0.3, label='Significant Window')
+
+        plt.title(f'Cluster-based Permutation Test: {behavior_a} vs {behavior_b} ({position_dict[y_column]})')
+        plt.xlabel('Time (s)')
+        plt.ylabel('t-statistic')
+        # 重複する凡例を避ける
+        handles, labels = plt.gca().get_legend_handles_labels()
+        by_label = dict(zip(labels, handles))
+        plt.legend(by_label.values(), by_label.keys(), bbox_to_anchor=(1.05, 1), loc='upper left')
+        plt.grid(True, linestyle=':', alpha=0.6)
+        plt.tight_layout()
+        plt.show()
         
         
+ 
         
 class GroomAim1LinearTests:
     def test_behavior_pair_comparison(self, df, behavior_a, behavior_b, y_column='delta_nose'):
