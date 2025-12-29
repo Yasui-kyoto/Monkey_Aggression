@@ -286,7 +286,7 @@ class DataCleaner:
             x=x_column,
             y=y_column,
             color='gray',
-            alpha=0.2,
+            alpha=0.25,
             label='Others'
         )
 
