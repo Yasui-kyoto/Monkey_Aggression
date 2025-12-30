@@ -13,7 +13,9 @@ class GroomAim1:
             'delta_face': 'Face',
             'corrected_delta_face': 'Face (Corrected)',
             'delta_nose': 'Nose',
-            'corrected_delta_nose': 'Nose (Corrected)'
+            'corrected_delta_nose': 'Nose (Corrected)',
+            'nose-face': 'Nose - Face',
+            'corrected_nose-face': 'Corrected Nose - Face'
         }
         pass
     
@@ -316,6 +318,149 @@ class GroomAim1:
             
         print(f"補正が完了しました。新しく追加された列: {[f'corrected_{c}' for c in y_columns]}")
         return df_corr
+    
+    
+    
+    def calculate_nose_face_difference(self, df, use_corrected=False):
+        """
+        noseの温度変化からfaceの温度変化を引いた値を算出する。
+        
+        Parameters:
+        -----------
+        df : pd.DataFrame
+            入力データフレーム
+        use_corrected : bool, default False
+            Trueの場合、'corrected_delta_nose' と 'corrected_delta_face' を使用する。
+            Falseの場合、'delta_nose' と 'delta_face' を使用する。
+        """
+        df_res = df.copy()
+        
+        if use_corrected:
+            # 補正済み列を使用する場合
+            target_nose = 'corrected_delta_nose'
+            target_face = 'corrected_delta_face'
+            new_col_name = 'corrected_nose-face'
+        else:
+            # 通常のdelta列を使用する場合
+            target_nose = 'delta_nose'
+            target_face = 'delta_face'
+            new_col_name = 'nose-face'
+            
+        # 必要な列が存在するかチェック
+        if target_nose in df_res.columns and target_face in df_res.columns:
+            df_res[new_col_name] = df_res[target_nose] - df_res[target_face]
+            print(f"計算が完了しました。新しい列: '{new_col_name}' を作成しました。")
+        else:
+            print(f"エラー: 必要な列 ({target_nose}, {target_face}) が見つかりません。")
+            
+        return df_res
+    
+    
+    
+    def run_one_sample_cluster_test(self, df_1s, behavior='grooming', y_column='corrected_nose-face', n_permutations=1000, p_threshold=0.05):
+        """
+        指定した行動の y_column が y=0 と有意に異なる時間帯を特定する1標本クラスターベース置換検定。
+        """
+        # 1. データの準備
+        data_sub = df_1s[df_1s['behavior'] == behavior]
+        times = sorted(df_1s['delta_time'].unique())
+        
+        def create_matrix(sub_df):
+            # Rows: sampling_id, Cols: delta_time
+            matrix = sub_df.pivot(index='sampling_id', columns='delta_time', values=y_column)
+            return matrix.dropna().values
+
+        matrix_obs = create_matrix(data_sub)
+        
+        if len(matrix_obs) < 3:
+            print(f"サンプル数が少なすぎるため（n={len(matrix_obs)}）、検定をスキップします。")
+            return None
+
+        # 2. 実データの 1標本t値計算 (vs 0) とクラスター特定
+        # stats.ttest_1samp はデフォルトで 0 と比較します
+        t_obs, p_obs = stats.ttest_1samp(matrix_obs, 0, axis=0)
+        df_degree = len(matrix_obs) - 1
+        thresh_t = stats.t.ppf(1 - p_threshold / 2, df_degree)
+        
+        def find_clusters(t_values, threshold_t):
+            clusters = []
+            current_indices = []
+            for i, t in enumerate(t_values):
+                if abs(t) > threshold_t:
+                    current_indices.append(i)
+                else:
+                    if current_indices:
+                        clusters.append(current_indices)
+                        current_indices = []
+            if current_indices:
+                clusters.append(current_indices)
+            return clusters
+
+        obs_clusters = find_clusters(t_obs, thresh_t)
+        obs_cluster_stats = [np.abs(np.sum(t_obs[c])) for c in obs_clusters]
+        
+        # 3. 置換検定（符号反転による帰無分布の作成）
+        print(f"Running {n_permutations} permutations (sign flipping)...")
+        n_samples = matrix_obs.shape[0]
+        null_max_clusters = []
+
+        for _ in range(n_permutations):
+            # 各個体ごとに +1 または -1 をランダムに生成して掛ける
+            signs = np.random.choice([-1, 1], size=(n_samples, 1))
+            matrix_shuffled = matrix_obs * signs
+            
+            t_rand, _ = stats.ttest_1samp(matrix_shuffled, 0, axis=0)
+            
+            rand_clusters = find_clusters(t_rand, thresh_t)
+            rand_stats = [np.abs(np.sum(t_rand[c])) for c in rand_clusters]
+            null_max_clusters.append(np.max(rand_stats) if rand_stats else 0)
+
+        # 4. 各クラスターごとにP値を計算
+        print(f"\n--- One-sample Cluster Test Result: {behavior} vs 0 ---")
+        print(f"Target variable: {self.position_dict.get(y_column, y_column)}")
+        
+        null_dist = np.array(null_max_clusters)
+        significant_periods = []
+        
+        if len(obs_clusters) == 0:
+            print("有意なクラスターは検出されませんでした。")
+        else:
+            for i, c_indices in enumerate(obs_clusters):
+                c_stat = obs_cluster_stats[i]
+                c_p_value = np.sum(null_dist >= c_stat) / n_permutations
+                
+                start_s = times[c_indices[0]]
+                end_s = times[c_indices[-1]]
+                
+                print(f"Cluster {i+1}: {start_s}s - {end_s}s | Stat: {c_stat:.2f} | p = {c_p_value:.4f}")
+                
+                if c_p_value < p_threshold:
+                    print(f"  => ★ 有意 (p < {p_threshold})")
+                    significant_periods.append((start_s, end_s))
+                else:
+                    print(f"  => 有意差なし")
+        print("---------------------------------------------------------")
+
+        # 5. 可視化
+        plt.figure(figsize=(12, 5))
+        plt.plot(times, t_obs, label='Observed t-value (vs 0)', color='black', alpha=0.7)
+        plt.axhline(thresh_t, color='red', linestyle='--', alpha=0.5, label='Threshold')
+        plt.axhline(-thresh_t, color='red', linestyle='--', alpha=0.5)
+        plt.axhline(0, color='gray', linewidth=0.8) # 0ライン
+        
+        for start_s, end_s in significant_periods:
+            plt.axvspan(start_s, end_s, color='yellow', alpha=0.3, label='Significant Window')
+
+        plt.title(f'One-sample Cluster Test: {behavior}\n({self.position_dict.get(y_column, y_column)})')
+        plt.xlabel('Time (s)')
+        plt.ylabel('t-statistic')
+        
+        handles, labels = plt.gca().get_legend_handles_labels()
+        by_label = dict(zip(labels, handles))
+        plt.legend(by_label.values(), by_label.keys(), bbox_to_anchor=(1.05, 1), loc='upper left')
+        plt.grid(True, linestyle=':', alpha=0.6)
+        plt.tight_layout()
+        plt.show()
         
         
  
