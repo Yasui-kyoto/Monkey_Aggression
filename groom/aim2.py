@@ -74,6 +74,34 @@ class GroomAim2:
     
     
 
+    def build_combined_strength_matrix(self, grooming_df, groomed_df):
+        """
+        2つのデータフレームを統合し、sampling_idの重複を考慮して
+        strength_matrix（毛繕い回数の行列）を構築する
+        """
+        # 1. 2つのデータフレームを縦に結合
+        combined_df = pd.concat([grooming_df, groomed_df], ignore_index=True)
+
+        # 2. 同じ sampling_id 内での重複ペアを排除
+        # (同一サンプリング内での同じ from-to は1回とカウント)
+        unique_interactions = combined_df.drop_duplicates(subset=['sampling_id', 'from', 'to'])
+
+        # 3. 集計して行列形式に変換
+        # fill_value=0 で一旦全組み合わせを0埋めし、集計後に0をNaNに戻す
+        strength_matrix = (
+            unique_interactions.groupby(['from', 'to'])
+            .size()
+            .unstack(fill_value=0)
+        )
+
+        # 4. 0をNaN（欠損値）に変換して、ご提示の形式に合わせる
+        # 数値計算にそのまま使う場合は 0 のままでもOKです
+        strength_matrix = strength_matrix.replace(0, pd.NA)
+
+        return strength_matrix
+    
+    
+
     def add_rank_direction(self, grooming_df, rank_dict):
         """
         グルーミングの方向（順位の高低）を判定して列を追加する。
@@ -111,6 +139,39 @@ class GroomAim2:
         
         return grooming_df
     
+    
+
+    def add_tie_strength(self, df, strength_matrix):
+        """
+        dfの 'from', 'to' 列に基づき、strength_matrix の値から
+        'tie-strength' 列を追加する
+        """
+        def get_label(row, strength_matrix=strength_matrix):
+            # 行列から値を取得 (fromが行, toが列)
+            try:
+                val = strength_matrix.loc[row['from'], row['to']]
+            except KeyError:
+                # 行名や列名が存在しない場合は欠損値
+                return np.nan
+            
+            # NaN（データなし）の場合の処理
+            if pd.isna(val):
+                return np.nan
+            
+            # 値に応じた分類
+            if val in [1, 2]:
+                return 'weak-tie'
+            elif val in [3, 4]:
+                return 'midle-tie'
+            elif val >= 5:
+                return 'strong-tie'
+            else:
+                return 'unknown'
+
+        # dfの各行に対して関数を適用
+        df['tie-strength'] = df.apply(get_label, axis=1)
+        return df
+ 
     
     
     def add_centrality_direction(self, grooming_df, centrality_dict):
