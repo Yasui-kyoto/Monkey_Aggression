@@ -114,11 +114,17 @@ class GroomAim1:
 
             # 器の作成と数値補間
             resampled = temp_group.reindex(new_index)
-            resampled = resampled.infer_objects(copy=False)
-            resampled = resampled.interpolate(method='linear')
             
-            # 非数値列の補完（前後埋め）
+            # --- 修正ポイント ---
+            # 1. 数値列のみ線形補間
+            numeric_cols = resampled.select_dtypes(include=[np.number]).columns
+            resampled[numeric_cols] = resampled[numeric_cols].interpolate(method='linear')
+            
+            # 2. 非数値列も含めて前後埋め
+            # future.no_silent_downcasting を設定するか、明示的にキャスト
             resampled = resampled.ffill().bfill()
+            resampled = resampled.infer_objects(copy=False)
+            # --------------------
             
             resampled['sampling_id'] = sid
             resampled.index.name = 'delta_time'
