@@ -20,6 +20,7 @@ class GroomAim2:
         
         self.effect_name_dict = {
             'rank_direction': 'Rank Direction',
+            'kin': 'Kinship',
         }
         
         
@@ -71,6 +72,64 @@ class GroomAim2:
         print(df[['sampling_id', 'name', 'from', 'to']].drop_duplicates(subset=['sampling_id']).head(10))
             
         return df
+    
+    
+    
+    def plot_kinship_comparison(self, groom_df, behavior_type='groomed', y_column='corrected_nose-face'):
+        """
+        血縁関係（kin: yes vs no）に基づいた温度変化の比較プロットを作成する。
+        
+        Parameters:
+        -----------
+        groom_df : pd.DataFrame
+            解析対象のデータフレーム
+        behavior_type : str, 'grooming' or 'groomed'
+            タイトル表示に使用する行動種別
+        y_column : str
+            縦軸に使用するカラム名
+        """
+        # 1. データのコピーとフィルタリング
+        # kin列が 'yes' または 'no' のデータを抽出し、欠損値を除外
+        valid_kin = ['yes', 'no']
+        plot_df = groom_df[groom_df['kin'].isin(valid_kin)].copy()
+
+        if plot_df.empty:
+            print(f"警告: {behavior_type} において血縁情報（kin）を持つデータが存在しません。")
+            return
+
+        plt.figure(figsize=(10, 6))
+        
+        # 2. 色指定
+        # Kin (yes) は親密さを表す暖色系、Non-kin (no) は寒色系などで設定
+        kin_palette = {'yes': '#e41a1c', 'no': '#377eb8'}
+
+        # 3. 帯プロット（信頼区間付き平均線）の描画
+        sns.lineplot(
+            data=plot_df,
+            x='delta_time',
+            y=y_column,
+            hue='kin',
+            hue_order=['yes', 'no'], # 凡例の順序を固定
+            palette=kin_palette,
+            errorbar=('ci', 95),      # 95%信頼区間
+            n_boot=500
+        )
+
+        # 4. タイトルとラベルの動的設定
+        plt.title(f'Temperature Dynamics: {behavior_type.capitalize()}\n'
+                  f'Comparison by Kinship | {y_column}')
+        plt.xlabel('Time (s)')
+        plt.ylabel('Temperature Change (°C)')
+        
+        # 5. 装飾
+        plt.grid(True, linestyle='--', alpha=0.5)
+        plt.axhline(0, color='black', linewidth=1, linestyle='-')
+        
+        # 凡例のラベルを分かりやすく調整
+        plt.legend(title='Kinship (Related)', loc='upper right', labels=['Kin (Yes)', 'Non-kin (No)'])
+
+        plt.tight_layout()
+        plt.show()
     
     
 
