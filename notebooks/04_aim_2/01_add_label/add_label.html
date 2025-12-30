@@ -7691,7 +7691,7 @@ a.anchor-link {
 <span class="n">filtered_df</span> <span class="o">=</span> <span class="n">raw_nose_face_df</span><span class="o">.</span><span class="n">dropna</span><span class="p">(</span><span class="n">subset</span><span class="o">=</span><span class="p">[</span><span class="s1">'from'</span><span class="p">,</span> <span class="s1">'to'</span><span class="p">])</span>
 
 <span class="c1"># 列を指定して表示</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">filtered_df</span><span class="p">[[</span><span class="s1">'sampling_id'</span><span class="p">,</span> <span class="s1">'name'</span><span class="p">,</span> <span class="s1">'from'</span><span class="p">,</span> <span class="s1">'to'</span><span class="p">]])</span>
+<span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">filtered_df</span><span class="p">[[</span><span class="s1">'sampling_id'</span><span class="p">,</span> <span class="s1">'name'</span><span class="p">,</span> <span class="s1">'from'</span><span class="p">,</span> <span class="s1">'to'</span><span class="p">]]))</span>
 </pre></div>
 </div>
 </div>
@@ -7704,9 +7704,7 @@ a.anchor-link {
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Empty DataFrame
-Columns: [sampling_id, name, from, to]
-Index: []
+<pre>0
 </pre>
 </div>
 </div>
@@ -7895,6 +7893,182 @@ to 列を name 列の値で補完しました。
 </div>
 </div>
 </div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=dfa18558">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h2 id="grooming_combination.csv%E3%81%AE%E4%BD%9C%E6%88%90"><code>grooming_combination.csv</code>の作成<a class="anchor-link" href="#grooming_combination.csv%E3%81%AE%E4%BD%9C%E6%88%90">¶</a></h2>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=d42ce1ba">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [11]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">strength_matrix</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">build_combined_strength_matrix</span><span class="p">(</span>
+    <span class="n">grooming_df</span><span class="p">,</span> <span class="n">groomed_df</span>
+<span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">strength_matrix</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>to        Beni Binega Botan Botaninf  Gure  Hado Hamayu  Hiba HibaInf Hinoki  \
+from                                                                           
+Beni      &lt;NA&gt;   &lt;NA&gt;     1     &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;   &lt;NA&gt;  &lt;NA&gt;    &lt;NA&gt;   &lt;NA&gt;   
+Binega    &lt;NA&gt;   &lt;NA&gt;  &lt;NA&gt;     &lt;NA&gt;     3  &lt;NA&gt;   &lt;NA&gt;  &lt;NA&gt;    &lt;NA&gt;   &lt;NA&gt;   
+Botan        1   &lt;NA&gt;  &lt;NA&gt;        1  &lt;NA&gt;  &lt;NA&gt;   &lt;NA&gt;  &lt;NA&gt;    &lt;NA&gt;   &lt;NA&gt;   
+Gure      &lt;NA&gt;      3  &lt;NA&gt;     &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;   &lt;NA&gt;  &lt;NA&gt;    &lt;NA&gt;   &lt;NA&gt;   
+Hado      &lt;NA&gt;   &lt;NA&gt;  &lt;NA&gt;     &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;   &lt;NA&gt;  &lt;NA&gt;    &lt;NA&gt;   &lt;NA&gt;   
+Hamayu    &lt;NA&gt;   &lt;NA&gt;  &lt;NA&gt;     &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;   &lt;NA&gt;  &lt;NA&gt;    &lt;NA&gt;   &lt;NA&gt;   
+Hiba      &lt;NA&gt;      1  &lt;NA&gt;     &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;   &lt;NA&gt;  &lt;NA&gt;       2   &lt;NA&gt;   
+Hinoki    &lt;NA&gt;   &lt;NA&gt;  &lt;NA&gt;     &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;   &lt;NA&gt;  &lt;NA&gt;    &lt;NA&gt;   &lt;NA&gt;   
+Hirugi    &lt;NA&gt;   &lt;NA&gt;  &lt;NA&gt;     &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;   &lt;NA&gt;  &lt;NA&gt;    &lt;NA&gt;   &lt;NA&gt;   
+Kanna     &lt;NA&gt;   &lt;NA&gt;  &lt;NA&gt;     &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;   &lt;NA&gt;  &lt;NA&gt;    &lt;NA&gt;   &lt;NA&gt;   
+Kannna    &lt;NA&gt;   &lt;NA&gt;  &lt;NA&gt;     &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;   &lt;NA&gt;  &lt;NA&gt;    &lt;NA&gt;   &lt;NA&gt;   
+Kizu      &lt;NA&gt;   &lt;NA&gt;  &lt;NA&gt;     &lt;NA&gt;  &lt;NA&gt;     1   &lt;NA&gt;  &lt;NA&gt;    &lt;NA&gt;      2   
+Kobu      &lt;NA&gt;   &lt;NA&gt;     3     &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;   &lt;NA&gt;  &lt;NA&gt;    &lt;NA&gt;   &lt;NA&gt;   
+Komatsu   &lt;NA&gt;   &lt;NA&gt;    11     &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;   &lt;NA&gt;  &lt;NA&gt;    &lt;NA&gt;   &lt;NA&gt;   
+Mikan        5   &lt;NA&gt;  &lt;NA&gt;     &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;   &lt;NA&gt;  &lt;NA&gt;    &lt;NA&gt;   &lt;NA&gt;   
+Namiru    &lt;NA&gt;   &lt;NA&gt;  &lt;NA&gt;     &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;   &lt;NA&gt;  &lt;NA&gt;    &lt;NA&gt;   &lt;NA&gt;   
+Nishin    &lt;NA&gt;   &lt;NA&gt;  &lt;NA&gt;     &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;   &lt;NA&gt;     4    &lt;NA&gt;   &lt;NA&gt;   
+Peach     &lt;NA&gt;   &lt;NA&gt;  &lt;NA&gt;     &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;   &lt;NA&gt;  &lt;NA&gt;    &lt;NA&gt;   &lt;NA&gt;   
+Tabu      &lt;NA&gt;   &lt;NA&gt;  &lt;NA&gt;     &lt;NA&gt;     1  &lt;NA&gt;   &lt;NA&gt;  &lt;NA&gt;    &lt;NA&gt;   &lt;NA&gt;   
+TabuInf   &lt;NA&gt;   &lt;NA&gt;  &lt;NA&gt;     &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;   &lt;NA&gt;  &lt;NA&gt;    &lt;NA&gt;   &lt;NA&gt;   
+Takana    &lt;NA&gt;   &lt;NA&gt;  &lt;NA&gt;     &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;   &lt;NA&gt;  &lt;NA&gt;    &lt;NA&gt;   &lt;NA&gt;   
+Tane         1   &lt;NA&gt;  &lt;NA&gt;     &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;   &lt;NA&gt;  &lt;NA&gt;    &lt;NA&gt;   &lt;NA&gt;   
+Taraba    &lt;NA&gt;   &lt;NA&gt;  &lt;NA&gt;     &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;   &lt;NA&gt;  &lt;NA&gt;    &lt;NA&gt;   &lt;NA&gt;   
+Teriba    &lt;NA&gt;   &lt;NA&gt;     3     &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;   &lt;NA&gt;  &lt;NA&gt;    &lt;NA&gt;   &lt;NA&gt;   
+Tsukasa   &lt;NA&gt;   &lt;NA&gt;  &lt;NA&gt;     &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;   &lt;NA&gt;  &lt;NA&gt;    &lt;NA&gt;   &lt;NA&gt;   
+Tsutsuji  &lt;NA&gt;   &lt;NA&gt;  &lt;NA&gt;     &lt;NA&gt;     1  &lt;NA&gt;   &lt;NA&gt;  &lt;NA&gt;    &lt;NA&gt;   &lt;NA&gt;   
+Tsuwa     &lt;NA&gt;   &lt;NA&gt;  &lt;NA&gt;     &lt;NA&gt;     1  &lt;NA&gt;   &lt;NA&gt;  &lt;NA&gt;    &lt;NA&gt;   &lt;NA&gt;   
+Yone      &lt;NA&gt;   &lt;NA&gt;     2     &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;      3  &lt;NA&gt;    &lt;NA&gt;   &lt;NA&gt;   
+Yotsuba      3      3  &lt;NA&gt;     &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;   &lt;NA&gt;  &lt;NA&gt;    &lt;NA&gt;      1   
+Yuna      &lt;NA&gt;   &lt;NA&gt;  &lt;NA&gt;     &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;   &lt;NA&gt;  &lt;NA&gt;    &lt;NA&gt;   &lt;NA&gt;   
+hamayu    &lt;NA&gt;   &lt;NA&gt;  &lt;NA&gt;     &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;   &lt;NA&gt;  &lt;NA&gt;    &lt;NA&gt;   &lt;NA&gt;   
+
+to        ... Taraba Teriba Tsukasa Tsutsuji Tsuwa  Yone Yotsuba  Yuna  \
+from      ...                                                            
+Beni      ...   &lt;NA&gt;   &lt;NA&gt;    &lt;NA&gt;     &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;       6  &lt;NA&gt;   
+Binega    ...   &lt;NA&gt;   &lt;NA&gt;    &lt;NA&gt;     &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;       3  &lt;NA&gt;   
+Botan     ...   &lt;NA&gt;      4    &lt;NA&gt;     &lt;NA&gt;  &lt;NA&gt;     2    &lt;NA&gt;  &lt;NA&gt;   
+Gure      ...   &lt;NA&gt;   &lt;NA&gt;    &lt;NA&gt;     &lt;NA&gt;     1  &lt;NA&gt;    &lt;NA&gt;  &lt;NA&gt;   
+Hado      ...   &lt;NA&gt;   &lt;NA&gt;    &lt;NA&gt;     &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;    &lt;NA&gt;  &lt;NA&gt;   
+Hamayu    ...   &lt;NA&gt;   &lt;NA&gt;    &lt;NA&gt;     &lt;NA&gt;  &lt;NA&gt;     2    &lt;NA&gt;  &lt;NA&gt;   
+Hiba      ...   &lt;NA&gt;   &lt;NA&gt;    &lt;NA&gt;     &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;    &lt;NA&gt;  &lt;NA&gt;   
+Hinoki    ...   &lt;NA&gt;   &lt;NA&gt;    &lt;NA&gt;     &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;    &lt;NA&gt;  &lt;NA&gt;   
+Hirugi    ...   &lt;NA&gt;   &lt;NA&gt;    &lt;NA&gt;     &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;    &lt;NA&gt;  &lt;NA&gt;   
+Kanna     ...   &lt;NA&gt;   &lt;NA&gt;    &lt;NA&gt;     &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;    &lt;NA&gt;     5   
+Kannna    ...   &lt;NA&gt;   &lt;NA&gt;    &lt;NA&gt;     &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;       2     1   
+Kizu      ...   &lt;NA&gt;   &lt;NA&gt;    &lt;NA&gt;     &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;    &lt;NA&gt;  &lt;NA&gt;   
+Kobu      ...   &lt;NA&gt;   &lt;NA&gt;    &lt;NA&gt;     &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;    &lt;NA&gt;  &lt;NA&gt;   
+Komatsu   ...   &lt;NA&gt;   &lt;NA&gt;    &lt;NA&gt;     &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;    &lt;NA&gt;  &lt;NA&gt;   
+Mikan     ...   &lt;NA&gt;   &lt;NA&gt;    &lt;NA&gt;     &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;       3  &lt;NA&gt;   
+Namiru    ...   &lt;NA&gt;   &lt;NA&gt;    &lt;NA&gt;     &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;    &lt;NA&gt;  &lt;NA&gt;   
+Nishin    ...   &lt;NA&gt;   &lt;NA&gt;    &lt;NA&gt;     &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;    &lt;NA&gt;  &lt;NA&gt;   
+Peach     ...   &lt;NA&gt;   &lt;NA&gt;    &lt;NA&gt;     &lt;NA&gt;  &lt;NA&gt;     5       1  &lt;NA&gt;   
+Tabu      ...   &lt;NA&gt;   &lt;NA&gt;    &lt;NA&gt;     &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;    &lt;NA&gt;  &lt;NA&gt;   
+TabuInf   ...   &lt;NA&gt;   &lt;NA&gt;    &lt;NA&gt;     &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;    &lt;NA&gt;  &lt;NA&gt;   
+Takana    ...   &lt;NA&gt;   &lt;NA&gt;    &lt;NA&gt;     &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;       3  &lt;NA&gt;   
+Tane      ...      5   &lt;NA&gt;    &lt;NA&gt;     &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;    &lt;NA&gt;  &lt;NA&gt;   
+Taraba    ...   &lt;NA&gt;   &lt;NA&gt;    &lt;NA&gt;     &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;    &lt;NA&gt;  &lt;NA&gt;   
+Teriba    ...   &lt;NA&gt;   &lt;NA&gt;    &lt;NA&gt;     &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;       2  &lt;NA&gt;   
+Tsukasa   ...   &lt;NA&gt;   &lt;NA&gt;    &lt;NA&gt;     &lt;NA&gt;     2  &lt;NA&gt;    &lt;NA&gt;  &lt;NA&gt;   
+Tsutsuji  ...   &lt;NA&gt;   &lt;NA&gt;    &lt;NA&gt;     &lt;NA&gt;     2  &lt;NA&gt;    &lt;NA&gt;  &lt;NA&gt;   
+Tsuwa     ...   &lt;NA&gt;   &lt;NA&gt;       3        1  &lt;NA&gt;  &lt;NA&gt;    &lt;NA&gt;  &lt;NA&gt;   
+Yone      ...   &lt;NA&gt;   &lt;NA&gt;    &lt;NA&gt;     &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;    &lt;NA&gt;  &lt;NA&gt;   
+Yotsuba   ...   &lt;NA&gt;      4    &lt;NA&gt;     &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;    &lt;NA&gt;  &lt;NA&gt;   
+Yuna      ...   &lt;NA&gt;   &lt;NA&gt;    &lt;NA&gt;     &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;    &lt;NA&gt;  &lt;NA&gt;   
+hamayu    ...   &lt;NA&gt;   &lt;NA&gt;    &lt;NA&gt;     &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;       4  &lt;NA&gt;   
+
+to       YunaInf hamayu  
+from                     
+Beni        &lt;NA&gt;   &lt;NA&gt;  
+Binega      &lt;NA&gt;   &lt;NA&gt;  
+Botan       &lt;NA&gt;   &lt;NA&gt;  
+Gure        &lt;NA&gt;   &lt;NA&gt;  
+Hado        &lt;NA&gt;   &lt;NA&gt;  
+Hamayu      &lt;NA&gt;   &lt;NA&gt;  
+Hiba        &lt;NA&gt;   &lt;NA&gt;  
+Hinoki      &lt;NA&gt;   &lt;NA&gt;  
+Hirugi      &lt;NA&gt;   &lt;NA&gt;  
+Kanna       &lt;NA&gt;   &lt;NA&gt;  
+Kannna      &lt;NA&gt;   &lt;NA&gt;  
+Kizu        &lt;NA&gt;   &lt;NA&gt;  
+Kobu        &lt;NA&gt;   &lt;NA&gt;  
+Komatsu     &lt;NA&gt;   &lt;NA&gt;  
+Mikan       &lt;NA&gt;   &lt;NA&gt;  
+Namiru      &lt;NA&gt;   &lt;NA&gt;  
+Nishin      &lt;NA&gt;   &lt;NA&gt;  
+Peach       &lt;NA&gt;   &lt;NA&gt;  
+Tabu        &lt;NA&gt;   &lt;NA&gt;  
+TabuInf     &lt;NA&gt;   &lt;NA&gt;  
+Takana      &lt;NA&gt;   &lt;NA&gt;  
+Tane        &lt;NA&gt;   &lt;NA&gt;  
+Taraba      &lt;NA&gt;   &lt;NA&gt;  
+Teriba      &lt;NA&gt;   &lt;NA&gt;  
+Tsukasa     &lt;NA&gt;   &lt;NA&gt;  
+Tsutsuji    &lt;NA&gt;   &lt;NA&gt;  
+Tsuwa       &lt;NA&gt;   &lt;NA&gt;  
+Yone        &lt;NA&gt;   &lt;NA&gt;  
+Yotsuba     &lt;NA&gt;      2  
+Yuna           1   &lt;NA&gt;  
+hamayu      &lt;NA&gt;   &lt;NA&gt;  
+
+[31 rows x 34 columns]
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=883a78b9">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [12]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="c1"># strength_matrixをCSVファイルとして保存</span>
+<span class="n">save_path</span> <span class="o">=</span> <span class="s2">"../../../data/04_aim_2_data/01_add_label/strength_matrix.csv"</span>
+
+<span class="n">strength_matrix</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">save_path</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"保存が完了しました: </span><span class="si">{</span><span class="n">save_path</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>保存が完了しました: ../../../data/04_aim_2_data/01_add_label/strength_matrix.csv
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
 <div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=2a09272d">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
@@ -7921,7 +8095,7 @@ to 列を name 列の値で補完しました。
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [11]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [13]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">rank_df</span> <span class="o">=</span> <span class="n">load_from_parquet</span><span class="p">(</span>
@@ -7962,7 +8136,7 @@ to 列を name 列の値で補完しました。
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [12]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [14]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="c1"># 1. 名前から順位を引くための辞書を作成</span>
@@ -7994,7 +8168,7 @@ to 列を name 列の値で補完しました。
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [13]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [15]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">grooming_df_rank</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_rank_direction</span><span class="p">(</span>
@@ -8034,7 +8208,7 @@ Name: count, dtype: int64
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [14]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [16]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">groomed_df_rank</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_rank_direction</span><span class="p">(</span>
@@ -8073,7 +8247,7 @@ Name: count, dtype: int64
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [15]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [17]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">grooming_df_rank</span><span class="p">[[</span><span class="s1">'sampling_id'</span><span class="p">,</span> <span class="s1">'name'</span><span class="p">,</span> <span class="s1">'from'</span><span class="p">,</span> <span class="s1">'to'</span><span class="p">,</span> <span class="s1">'rank_direction'</span><span class="p">]]</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">10</span><span class="p">))</span>
@@ -8089,17 +8263,342 @@ Name: count, dtype: int64
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>       sampling_id    name    from       to rank_direction
-1234             5   Botan   Botan  Komatsu    low_to_high
-36794          150    Tane    Tane   Taraba    high_to_low
-41989          167   Mikan   Mikan  Yotsuba    low_to_high
-37004          150    Tane    Tane   Taraba    high_to_low
-14991           64    Tabu    Tabu  TabuInf    high_to_low
-767              3   Botan   Botan  Komatsu    low_to_high
-45611          181  Binega  Binega  Yotsuba    low_to_high
-67272          272   Botan   Botan     Kobu    low_to_high
-79585          323   Tsuwa   Tsuwa     Gure    low_to_high
-22057           91  Binega  Binega   Nishin    low_to_high
+<pre>       sampling_id     name     from        to rank_direction
+71701          296  Yotsuba  Yotsuba    Teriba    high_to_low
+29575          122  Komatsu  Komatsu      Tane    low_to_high
+43728          173   Binega   Binega      Gure    low_to_high
+72244          299  Yotsuba  Yotsuba    Teriba    high_to_low
+2416            10    Botan    Botan  Botaninf    high_to_low
+56179          225     Kizu     Kizu    Hirugi    high_to_low
+38039          154     Tane     Tane      Beni    high_to_low
+79591          323    Tsuwa    Tsuwa      Gure    low_to_high
+62114          251     Kizu     Kizu    Hinoki    high_to_low
+26551          110     Tane     Tane   Komatsu    high_to_low
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=f50d4883">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h2 id="tie_strength">tie_strength<a class="anchor-link" href="#tie_strength">¶</a></h2>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=90d88ce1">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [18]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+
+<span class="c1"># 1. 出現回数を計算（現在の状態）</span>
+<span class="n">counts</span> <span class="o">=</span> <span class="n">strength_matrix</span><span class="o">.</span><span class="n">stack</span><span class="p">()</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span><span class="o">.</span><span class="n">sort_index</span><span class="p">()</span>
+
+<span class="c1"># 2. DataFrameに変換して「回数」と「数値ごとの和」を計算</span>
+<span class="n">df_result</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">counts</span><span class="p">)</span>
+<span class="n">df_result</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'出現回数'</span><span class="p">]</span>
+<span class="n">df_result</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s1">'数値'</span>
+
+<span class="c1"># 数値（Index） × 出現回数 で「その数値内の和」を計算</span>
+<span class="n">df_result</span><span class="p">[</span><span class="s1">'数値ごとの和'</span><span class="p">]</span> <span class="o">=</span> <span class="n">df_result</span><span class="o">.</span><span class="n">index</span> <span class="o">*</span> <span class="n">df_result</span><span class="p">[</span><span class="s1">'出現回数'</span><span class="p">]</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">df_result</span><span class="p">)</span>
+
+<span class="c1"># 全体の合計も表示</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"-"</span> <span class="o">*</span> <span class="mi">20</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"総計: </span><span class="si">{</span><span class="n">df_result</span><span class="p">[</span><span class="s1">'数値ごとの和'</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>    出現回数 数値ごとの和
+数値             
+1     27     27
+2     17     34
+3     16     48
+4      7     28
+5      4     20
+6      3     18
+7      1      7
+8      2     16
+11     1     11
+16     1     16
+--------------------
+総計: 225
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=9deb520d">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h3 id="tie_strength%E5%88%97%E3%82%92%E8%BF%BD%E5%8A%A0"><code>tie_strength</code>列を追加<a class="anchor-link" href="#tie_strength%E5%88%97%E3%82%92%E8%BF%BD%E5%8A%A0">¶</a></h3>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=249c509a">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<p><code>weak-tie</code> : 1~2回 (sample:44, total:61)<br/>
+<code>midle-tie</code>: 3~4回 (sample:23, total:76)<br/>
+<code>strong-tie</code>：5~回 (sample:12, total:88)</p>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=967accc2">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [19]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">grooming_df_tie</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_tie_strength</span><span class="p">(</span>
+    <span class="n">grooming_df_rank</span><span class="p">,</span>
+    <span class="n">strength_matrix</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=4c00ccc6">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [20]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">grooming_df_tie</span><span class="p">[[</span><span class="s1">'sampling_id'</span><span class="p">,</span> <span class="s1">'from'</span><span class="p">,</span> <span class="s1">'to'</span><span class="p">,</span> <span class="s1">'tie-strength'</span><span class="p">]]</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">10</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>       sampling_id     from       to tie-strength
+31114          128  Komatsu    Botan   strong-tie
+46325          183   Binega  Yotsuba    midle-tie
+16229           68     Tabu  TabuInf    midle-tie
+59954          242     Kizu   Hirugi   strong-tie
+36409          147     Tane  Komatsu   strong-tie
+67187          272    Botan     Kobu    midle-tie
+58518          234     Hiba   Nishin     weak-tie
+31799          130  Komatsu    Botan   strong-tie
+29132          120  Komatsu     Tane   strong-tie
+48653          197     Yone    Peach    midle-tie
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=3880dd35">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [21]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">groomed_df_tie</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_tie_strength</span><span class="p">(</span>
+    <span class="n">groomed_df_rank</span><span class="p">,</span>
+    <span class="n">strength_matrix</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=52594f39">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h2 id="centrality">centrality<a class="anchor-link" href="#centrality">¶</a></h2>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=6e0c048a">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h3 id="centrality%E3%81%AEdict%E3%82%92%E4%BD%9C%E6%88%90">centralityのdictを作成<a class="anchor-link" href="#centrality%E3%81%AEdict%E3%82%92%E4%BD%9C%E6%88%90">¶</a></h3>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=db527213">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [22]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">centrality_df</span> <span class="o">=</span> <span class="n">load_from_parquet</span><span class="p">(</span>
+    <span class="s2">"../../../data/01_relationship_data/centrality_df.parquet"</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>--- 復元完了 ---
+復元されたDataFrameのshape: (34, 2)
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=23b0289d">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [23]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="c1"># 名前から中心性を引くための辞書を作成</span>
+<span class="n">centrality_dict</span> <span class="o">=</span> <span class="n">centrality_df</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s1">'name'</span><span class="p">)[</span><span class="s1">'centrality'</span><span class="p">]</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">centrality_dict</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>{'Komatsu': 51.0, 'Yotsuba': 46.0, 'Botan': 39.0, 'Tane': 30.0, 'Kizu': 21.0, 'Beni': 20.0, 'Yone': 18.0, 'Hirugi': 16.0, 'Tabu': 15.0, 'Binega': 14.0, 'Mikan': 14.0, 'Teriba': 13.0, 'Kobu': 11.0, 'Gure': 11.0, 'Peach': 11.0, 'Takana': 11.0, 'Tsuwa': 10.0, 'Yuna': 10.0, 'Namiru': 10.0, 'Nishin': 9.0, 'Hiba': 9.0, 'TabuInf': 8.0, 'Kannna': 7.0, 'Taraba': 7.0, 'Kanna': 7.0, 'Tsutsuji': 6.0, 'hamayu': 6.0, 'Tsukasa': 5.0, 'Hamayu': 5.0, 'Hinoki': 4.0, 'HibaInf': 2.0, 'Hado': 2.0, 'Botaninf': 1.0, 'YunaInf': 1.0}
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=ec907576">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h3 id="%E4%B8%AD%E5%BF%83%E6%80%A7%E3%81%AE%E6%96%B9%E5%90%91%E6%80%A7%E3%82%92%E4%BB%98%E4%B8%8E%EF%BC%88centrality_direction%E5%88%97%EF%BC%89">中心性の方向性を付与（<code>centrality_direction</code>列）<a class="anchor-link" href="#%E4%B8%AD%E5%BF%83%E6%80%A7%E3%81%AE%E6%96%B9%E5%90%91%E6%80%A7%E3%82%92%E4%BB%98%E4%B8%8E%EF%BC%88centrality_direction%E5%88%97%EF%BC%89">¶</a></h3>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=7e1a3ad9">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [24]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">grooming_df_centrality</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_centrality_direction</span><span class="p">(</span>
+    <span class="n">grooming_df_tie</span><span class="p">,</span>
+    <span class="n">centrality_dict</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>中心性方向の判定が完了しました。
+centrality_direction
+high_to_low    23478
+low_to_high    11739
+equal            602
+Name: count, dtype: int64
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=5189fc2b">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [25]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">groomed_df_centrality</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_centrality_direction</span><span class="p">(</span>
+    <span class="n">groomed_df_tie</span><span class="p">,</span>
+    <span class="n">centrality_dict</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>中心性方向の判定が完了しました。
+centrality_direction
+low_to_high    18060
+high_to_low    12341
+equal           1204
+Name: count, dtype: int64
 </pre>
 </div>
 </div>
@@ -8121,11 +8620,11 @@ Name: count, dtype: int64
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [16]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [26]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">save_to_parquet</span><span class="p">(</span>
-    <span class="n">grooming_df_rank</span><span class="p">,</span>
+    <span class="n">grooming_df_centrality</span><span class="p">,</span>
     <span class="s2">"../../../data/04_aim_2_data/01_add_label/labeled_grooming_df.parquet"</span>
 <span class="p">)</span>
 </pre></div>
@@ -8141,7 +8640,7 @@ Name: count, dtype: int64
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
 <pre>--- 保存完了 ---
-'../../../data/04_aim_2_data/01_add_label/labeled_grooming_df.parquet' として保存されました。ファイルサイズ: 1335.28 KB
+'../../../data/04_aim_2_data/01_add_label/labeled_grooming_df.parquet' として保存されました。ファイルサイズ: 1336.68 KB
 </pre>
 </div>
 </div>
@@ -8152,11 +8651,11 @@ Name: count, dtype: int64
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [17]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [27]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">save_to_parquet</span><span class="p">(</span>
-    <span class="n">groomed_df_rank</span><span class="p">,</span>
+    <span class="n">groomed_df_centrality</span><span class="p">,</span>
     <span class="s2">"../../../data/04_aim_2_data/01_add_label/labeled_groomed_df.parquet"</span>
 <span class="p">)</span>
 </pre></div>
@@ -8172,7 +8671,7 @@ Name: count, dtype: int64
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
 <pre>--- 保存完了 ---
-'../../../data/04_aim_2_data/01_add_label/labeled_groomed_df.parquet' として保存されました。ファイルサイズ: 1132.22 KB
+'../../../data/04_aim_2_data/01_add_label/labeled_groomed_df.parquet' として保存されました。ファイルサイズ: 1133.62 KB
 </pre>
 </div>
 </div>
