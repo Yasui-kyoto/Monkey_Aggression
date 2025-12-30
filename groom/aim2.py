@@ -17,6 +17,13 @@ class GroomAim2:
             'nose-face': 'Nose - Face',
             'corrected_nose-face': 'Corrected Nose - Face'
         }
+        
+        self.effect_name_dict = {
+            'rank_direction': 'Rank Direction',
+        }
+        
+        
+        
         pass
     
 
@@ -103,3 +110,172 @@ class GroomAim2:
         print(grooming_df['rank_direction'].value_counts()) # 内訳を表示
         
         return grooming_df
+    
+    
+    
+    def plot_rank_direction_comparison(self, groom_df, behavior_type='groomed', y_column='corrected_nose-face'):
+        """
+        順位方向（high_to_low vs low_to_high）に基づいた温度変化の比較プロットを作成する。
+        
+        Parameters:
+        -----------
+        groom_df : pd.DataFrame
+            解析対象のデータフレーム
+        behavior_type : str, 'grooming' or 'groomed'
+            タイトル表示に使用する行動種別
+        y_column : str
+            縦軸に使用するカラム名
+        """
+        # 1. データのコピーと方向の絞り込み
+        # 'equal' や 'unknown' を除外し、有効な方向のみを抽出
+        valid_directions = ['high_to_low', 'low_to_high']
+        plot_df = groom_df[groom_df['rank_direction'].isin(valid_directions)].copy()
+
+        if plot_df.empty:
+            print(f"警告: {behavior_type} において判定可能な順位方向のデータが存在しません。")
+            return
+
+        plt.figure(figsize=(10, 6))
+        
+        # 2. 色指定
+        # high_to_low (上位から下位へ) と low_to_high (下位から上位へ)
+        direction_palette = {'high_to_low': '#1f77b4', 'low_to_high': '#d62728'}
+
+        # 3. 帯プロット（信頼区間付き平均線）の描画
+        sns.lineplot(
+            data=plot_df,
+            x='delta_time',
+            y=y_column,
+            hue='rank_direction',
+            palette=direction_palette,
+            errorbar=('ci', 95),  # 95%信頼区間を影として表示
+            n_boot=500
+        )
+
+        # 4. タイトルとラベルの動的設定
+        # behavior_type をタイトルに反映
+        plt.title(f'Temperature Dynamics: {behavior_type.capitalize()}\n'
+                  f'Comparison by Rank Direction | {y_column}')
+        plt.xlabel('Time (s)')
+        plt.ylabel('Temperature Change (°C)')
+        
+        # 5. 装飾
+        plt.grid(True, linestyle='--', alpha=0.5)
+        plt.axhline(0, color='black', linewidth=1, linestyle='-')
+        plt.legend(title='Rank Direction', loc='upper right')
+
+        plt.tight_layout()
+        plt.show()
+        
+        
+        
+    def run_cluster_based_replacement_test(
+        self, 
+        groom_df, 
+        target_cols='rank_direction',
+        target_values=['high_to_low', 'low_to_high'],
+        y_column='corrected_nose-face', 
+        n_permutations=1000, 
+        p_threshold=0.05
+    ):
+        """
+        target_colsが温度変化に与える影響を検定する。
+        """
+        # 1. データの準備
+        # 分析対象の2つのグループを抽出
+        data_a = groom_df[groom_df[target_cols] == target_values[0]]
+        data_b = groom_df[groom_df[target_cols] == target_values[1]]
+        times = sorted(groom_df['delta_time'].unique())
+        
+        def create_matrix(sub_df):
+            # 縦にサンプル(sampling_id)、横に時間(delta_time)の行列を作成
+            matrix = sub_df.pivot(index='sampling_id', columns='delta_time', values=y_column)
+            # 全ての時間点にデータが揃っているサンプルのみを使用
+            return matrix.dropna().values
+
+        matrix_a = create_matrix(data_a)
+        matrix_b = create_matrix(data_b)
+        
+        if len(matrix_a) < 3 or len(matrix_b) < 3:
+            print(f"サンプル数が少なすぎるため検定をスキップします。(a: {len(matrix_a)}, b: {len(matrix_b)})")
+            return None
+
+        # 2. 実データの t値計算とクラスター特定
+        # 対応なしのt検定
+        t_obs, _ = stats.ttest_ind(matrix_a, matrix_b, axis=0)
+        df_degree = len(matrix_a) + len(matrix_b) - 2
+        thresh_t = stats.t.ppf(1 - p_threshold / 2, df_degree)
+        
+        def find_clusters(t_values, threshold_t):
+            clusters = []
+            current_indices = []
+            for i, t in enumerate(t_values):
+                if abs(t) > threshold_t:
+                    current_indices.append(i)
+                else:
+                    if current_indices:
+                        clusters.append(current_indices)
+                        current_indices = []
+            if current_indices:
+                clusters.append(current_indices)
+            return clusters
+
+        obs_clusters = find_clusters(t_obs, thresh_t)
+        obs_cluster_stats = [np.abs(np.sum(t_obs[c])) for c in obs_clusters]
+
+        # 3. 置換検定（帰無分布の作成）
+        print(f"Running {n_permutations} permutations for Rank Direction...")
+        combined_matrix = np.vstack([matrix_a, matrix_b])
+        n_a = len(matrix_a)
+        null_max_clusters = []
+
+        for _ in range(n_permutations):
+            indices = np.random.permutation(len(combined_matrix))
+            # ラベルをシャッフルしてt値を再計算
+            t_rand, _ = stats.ttest_ind(combined_matrix[indices[:n_a]], combined_matrix[indices[n_a:]], axis=0)
+            
+            rand_clusters = find_clusters(t_rand, thresh_t)
+            rand_stats = [np.abs(np.sum(t_rand[c])) for c in rand_clusters]
+            null_max_clusters.append(np.max(rand_stats) if rand_stats else 0)
+
+        # 4. 結果の判定
+        null_dist = np.array(null_max_clusters)
+        significant_periods = []
+        
+        print(f"\n--- Cluster-based Permutation Result: High-to-Low vs Low-to-High ---")
+        if not obs_clusters:
+            print("閾値を超えるクラスターは検出されませんでした。")
+        else:
+            for i, c_indices in enumerate(obs_clusters):
+                c_stat = obs_cluster_stats[i]
+                # このクラスターの統計量がシャッフル分布の何％以上か
+                c_p_value = np.sum(null_dist >= c_stat) / n_permutations
+                start_s = times[c_indices[0]]
+                end_s = times[c_indices[-1]]
+
+                print(f"Cluster {i+1}: {start_s}s - {end_s}s | Sum(t): {c_stat:.2f} | p = {c_p_value:.4f}")
+                if c_p_value < p_threshold:
+                    print(f"  => ★ 有意差あり")
+                    significant_periods.append((start_s, end_s))
+
+        # 5. 可視化
+        plt.figure(figsize=(10, 5))
+        plt.plot(times, t_obs, label=f'Observed t-value ({target_values[0]} vs {target_values[1]})', color='black')
+        plt.axhline(thresh_t, color='red', linestyle='--', alpha=0.5, label='t-Threshold')
+        plt.axhline(-thresh_t, color='red', linestyle='--')
+        
+        for start_s, end_s in significant_periods:
+            plt.axvspan(start_s, end_s, color='yellow', alpha=0.3, label='Significant Window')
+
+        plt.title(f'Cluster-based Permutation Test: {self.effect_name_dict[target_cols]} Effect\n{y_column}')
+        plt.xlabel('Time (s)')
+        plt.ylabel('t-statistic')
+        
+        # 凡例の重複除去
+        handles, labels = plt.gca().get_legend_handles_labels()
+        by_label = dict(zip(labels, handles))
+        plt.legend(by_label.values(), by_label.keys(), loc='upper right')
+        
+        plt.grid(True, linestyle=':', alpha=0.6)
+        plt.tight_layout()
+        plt.show()
