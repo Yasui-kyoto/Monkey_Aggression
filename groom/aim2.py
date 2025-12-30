@@ -21,9 +21,8 @@ class GroomAim2:
         self.effect_name_dict = {
             'rank_direction': 'Rank Direction',
             'kin': 'Kinship',
+            'centrality_direction': 'Centrality Direction'
         }
-        
-        
         
         pass
     
@@ -72,6 +71,83 @@ class GroomAim2:
         print(df[['sampling_id', 'name', 'from', 'to']].drop_duplicates(subset=['sampling_id']).head(10))
             
         return df
+    
+    
+
+    def add_rank_direction(self, grooming_df, rank_dict):
+        """
+        グルーミングの方向（順位の高低）を判定して列を追加する。
+        オス（Kobu, Nishin, Gure）は常に最上位として扱う。
+        """
+        # 1. 順位を取得する内部補助関数
+        def get_rank(name):
+            # 辞書にあればその順位、なければ一旦大きな値（最下位以下）を返す
+            return rank_dict.get(name, 999)
+
+        # 2. 各行に対して判定を行う
+        def judge_direction(row):
+            # 名前が取得できない（NaN）場合は判定不可
+            if pd.isna(row['from']) or pd.isna(row['to']):
+                return 'unknown'
+            
+            rank_from = get_rank(row['from'])
+            rank_to = get_rank(row['to'])
+
+            # 順位の数値が小さいほど「高順位」
+            if rank_from < rank_to:
+                return 'high_to_low'  # 高順位から低順位へ
+            elif rank_from > rank_to:
+                return 'low_to_high'  # 低順位から高順位へ
+            else:
+                return 'equal'        # 同順位（オス同士、またはランクが同じメス同士）
+
+        # 新しい列 'rank_direction' を作成
+        # .apply(axis=1) で1行ずつ判定を回す
+        results = grooming_df.apply(judge_direction, axis=1)
+        grooming_df.loc[:, 'rank_direction'] = results
+
+        print("順位方向の判定が完了しました。")
+        print(grooming_df['rank_direction'].value_counts()) # 内訳を表示
+        
+        return grooming_df
+    
+    
+    
+    def add_centrality_direction(self, grooming_df, centrality_dict):
+        """
+        中心性（Centrality）の高低に基づいたグルーミングの方向を判定して列を追加する。
+        """
+        # 1. 中心性を取得する内部補助関数
+        def get_centrality(name):
+            # 辞書にあればその値、なければ最小値（0.0）を返す
+            return centrality_dict.get(name, 0.0)
+
+        # 2. 各行に対して判定を行う
+        def judge_direction(row):
+            # 名前が欠損している場合は判定不可
+            if pd.isna(row['from']) or pd.isna(row['to']):
+                return 'unknown'
+            
+            c_from = get_centrality(row['from'])
+            c_to = get_centrality(row['to'])
+
+            # 中心性の数値が大きいほど「上位（High）」と判定
+            if c_from > c_to:
+                return 'high_to_low'  # 中心性が高い個体から低い個体へ
+            elif c_from < c_to:
+                return 'low_to_high'  # 中心性が低い個体から高い個体へ
+            else:
+                return 'equal'        # 中心性が同じ
+
+        # 新しい列 'centrality_direction' を作成
+        # SettingWithCopyWarning を避けるため .loc を使用
+        results = grooming_df.apply(judge_direction, axis=1)
+        grooming_df.loc[:, 'centrality_direction'] = results
+
+        print("中心性方向の判定が完了しました。")
+        print(grooming_df['centrality_direction'].value_counts())
+        
+        return grooming_df
     
     
     
@@ -132,49 +208,16 @@ class GroomAim2:
         plt.show()
     
     
-
-    def add_rank_direction(self, grooming_df, rank_dict):
-        """
-        グルーミングの方向（順位の高低）を判定して列を追加する。
-        オス（Kobu, Nishin, Gure）は常に最上位として扱う。
-        """
-        # 1. 順位を取得する内部補助関数
-        def get_rank(name):
-            # 辞書にあればその順位、なければ一旦大きな値（最下位以下）を返す
-            return rank_dict.get(name, 999)
-
-        # 2. 各行に対して判定を行う
-        def judge_direction(row):
-            # 名前が取得できない（NaN）場合は判定不可
-            if pd.isna(row['from']) or pd.isna(row['to']):
-                return 'unknown'
-            
-            rank_from = get_rank(row['from'])
-            rank_to = get_rank(row['to'])
-
-            # 順位の数値が小さいほど「高順位」
-            if rank_from < rank_to:
-                return 'high_to_low'  # 高順位から低順位へ
-            elif rank_from > rank_to:
-                return 'low_to_high'  # 低順位から高順位へ
-            else:
-                return 'equal'        # 同順位（オス同士、またはランクが同じメス同士）
-
-        # 新しい列 'rank_direction' を作成
-        # .apply(axis=1) で1行ずつ判定を回す
-        results = grooming_df.apply(judge_direction, axis=1)
-        grooming_df.loc[:, 'rank_direction'] = results
-
-        print("順位方向の判定が完了しました。")
-        print(grooming_df['rank_direction'].value_counts()) # 内訳を表示
-        
-        return grooming_df
     
-    
-    
-    def plot_rank_direction_comparison(self, groom_df, behavior_type='groomed', y_column='corrected_nose-face'):
+    def plot_direction_comparison(
+        self, 
+        groom_df, 
+        target_cols='rank_direction',
+        behavior_type='groomed', 
+        y_column='corrected_nose-face'
+    ):
         """
-        順位方向（high_to_low vs low_to_high）に基づいた温度変化の比較プロットを作成する。
+        方向（high_to_low vs low_to_high）に基づいた温度変化の比較プロットを作成する。
         
         Parameters:
         -----------
@@ -188,10 +231,10 @@ class GroomAim2:
         # 1. データのコピーと方向の絞り込み
         # 'equal' や 'unknown' を除外し、有効な方向のみを抽出
         valid_directions = ['high_to_low', 'low_to_high']
-        plot_df = groom_df[groom_df['rank_direction'].isin(valid_directions)].copy()
+        plot_df = groom_df[groom_df[target_cols].isin(valid_directions)].copy()
 
         if plot_df.empty:
-            print(f"警告: {behavior_type} において判定可能な順位方向のデータが存在しません。")
+            print(f"警告: {behavior_type} において判定可能な方向のデータが存在しません。")
             return
 
         plt.figure(figsize=(10, 6))
@@ -205,7 +248,7 @@ class GroomAim2:
             data=plot_df,
             x='delta_time',
             y=y_column,
-            hue='rank_direction',
+            hue=target_cols,
             palette=direction_palette,
             errorbar=('ci', 95),  # 95%信頼区間を影として表示
             n_boot=500
@@ -214,14 +257,14 @@ class GroomAim2:
         # 4. タイトルとラベルの動的設定
         # behavior_type をタイトルに反映
         plt.title(f'Temperature Dynamics: {behavior_type.capitalize()}\n'
-                  f'Comparison by Rank Direction | {y_column}')
+                  f'Comparison by {self.effect_name_dict[target_cols]} | {y_column}')
         plt.xlabel('Time (s)')
         plt.ylabel('Temperature Change (°C)')
         
         # 5. 装飾
         plt.grid(True, linestyle='--', alpha=0.5)
         plt.axhline(0, color='black', linewidth=1, linestyle='-')
-        plt.legend(title='Rank Direction', loc='upper right')
+        plt.legend(title=f'{self.effect_name_dict[target_cols]}', loc='upper right')
 
         plt.tight_layout()
         plt.show()
