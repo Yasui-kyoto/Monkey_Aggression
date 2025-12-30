@@ -21,7 +21,8 @@ class GroomAim2:
         self.effect_name_dict = {
             'rank_direction': 'Rank Direction',
             'kin': 'Kinship',
-            'centrality_direction': 'Centrality Direction'
+            'centrality_direction': 'Centrality Direction',
+            'tie-strength': 'Tie Strength'
         }
         
         pass
@@ -326,6 +327,59 @@ class GroomAim2:
         plt.grid(True, linestyle='--', alpha=0.5)
         plt.axhline(0, color='black', linewidth=1, linestyle='-')
         plt.legend(title=f'{self.effect_name_dict[target_cols]}', loc='upper right')
+
+        plt.tight_layout()
+        plt.show()
+        
+        
+        
+    def plot_tie_strength_comparison(self, groom_df, behavior_type='groomed', y_column='corrected_nose-face'):
+        """
+        紐帯の強さ（tie-strength: weak, midle, strong）に基づいた温度変化の比較プロットを作成する。
+        """
+        # 1. データのコピーとフィルタリング
+        # 必要な3つのカテゴリのみを抽出し、欠損値を除外
+        target_ties = ['weak-tie', 'midle-tie', 'strong-tie']
+        plot_df = groom_df[groom_df['tie-strength'].isin(target_ties)].copy()
+
+        if plot_df.empty:
+            print(f"警告: {behavior_type} において紐帯情報（tie-strength）を持つデータが存在しません。")
+            return
+
+        plt.figure(figsize=(10, 6))
+        
+        # 2. カラーパレットの設定
+        # 弱い関係(寒色) -> 中間 -> 強い関係(暖色) のイメージで設定
+        tie_palette = {
+            'weak-tie': '#377eb8',   # 青
+            'midle-tie': '#4daf4a',  # 緑
+            'strong-tie': '#e41a1c'  # 赤
+        }
+
+        # 3. 帯プロット（信頼区間付き平均線）の描画
+        sns.lineplot(
+            data=plot_df,
+            x='delta_time',
+            y=y_column,
+            hue='tie-strength',
+            hue_order=target_ties,  # 順序を weak -> midle -> strong に固定
+            palette=tie_palette,
+            errorbar=('ci', 95),    # 95%信頼区間
+            n_boot=500
+        )
+
+        # 4. タイトルとラベルの動的設定
+        plt.title(f'Temperature Dynamics: {behavior_type.capitalize()}\n'
+                  f'Comparison by Tie Strength | {y_column}')
+        plt.xlabel('Time (s)')
+        plt.ylabel('Temperature Change (°C)')
+        
+        # 5. 装飾
+        plt.grid(True, linestyle='--', alpha=0.5)
+        plt.axhline(0, color='black', linewidth=1, linestyle='-')
+        
+        # 凡例の調整
+        plt.legend(title='Tie Strength', loc='upper right')
 
         plt.tight_layout()
         plt.show()
