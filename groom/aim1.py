@@ -109,6 +109,9 @@ class GroomAim1:
         print(f"Interpolating {df['sampling_id'].nunique()} samples...")
 
         for sid, group in df.groupby('sampling_id'):
+            # そのサンプルの「開始時刻」を取得しておく
+            start_datetime = group['datetime'].min()
+            
             new_index = np.arange(0, time_limit + 1)
             temp_group = group.drop_duplicates(subset='delta_time').set_index('delta_time')
 
@@ -125,6 +128,11 @@ class GroomAim1:
             resampled = resampled.ffill().bfill()
             resampled = resampled.infer_objects(copy=False)
             # --------------------
+            
+            # datetime列（pd.datetime型） を再計算する ---
+            # 開始時刻に delta_time (index) を秒として加算する
+            resampled['datetime'] = start_datetime + pd.to_timedelta(resampled.index, unit='s')
+            # ---------------------------------------
             
             resampled['sampling_id'] = sid
             resampled.index.name = 'delta_time'
