@@ -24,6 +24,53 @@ class GroomAim1:
     def plot_behavior_scatter(self, df, y_column, x_column='delta_time', hue_column='behavior'):
         """
         指定されたデータフレームから散布図を作成する関数。
+        """
+        plt.figure(figsize=(10, 6))
+        
+        # behaviorごとの色を固定する辞書
+        color_palette = {'BL': '#023eff', 'grooming': '#ff7c00', 'groomed': '#1ac938'}
+    
+        # --- 修正ポイント1: 凡例ラベルに n= を追加 ---
+        # 各カテゴリーの出現回数をカウント
+        counts = df[hue_column].value_counts()
+        
+        # 元のデータフレームをコピーして、凡例用のラベル書き換えた一時的なカラムを作成
+        df_plot = df.copy()
+        df_plot['legend_label'] = df_plot[hue_column].apply(lambda x: f"{x} (n={counts[x]})")
+        
+        # カラーパレットも新しいラベルに対応させる
+        new_palette = {f"{k} (n={counts[k]})": v for k, v in color_palette.items() if k in counts}
+    
+        # 散布図の描画
+        sns.scatterplot(
+            data=df_plot, 
+            x=x_column, 
+            y=y_column, 
+            hue='legend_label',  # 新しく作ったラベルを使用
+            palette=new_palette,
+            alpha=0.7
+        )
+    
+        
+        # --- 修正ポイント2: タイトルに総数を表示 ---
+        total_n = len(df)
+        plt.title(f'Time Series Analysis: Scatter plot of {self.position_dict[y_column]} Change (Total n={total_n})')
+        
+        plt.xlabel('Time from the starting point (s)')
+        plt.ylabel('Temperature change (°C)')
+        
+        # 凡例の設定
+        plt.legend(title=hue_column, bbox_to_anchor=(1.05, 1), loc='upper left')
+        
+        plt.grid(True, linestyle='--', alpha=0.6)
+        plt.tight_layout()
+        plt.show()
+    
+    
+    
+    def plot_behavior_scatter_without_n(self, df, y_column, x_column='delta_time', hue_column='behavior'):
+        """
+        指定されたデータフレームから散布図を作成する関数。
 
         Parameters:
         df (pd.DataFrame): データセット
@@ -59,6 +106,58 @@ class GroomAim1:
     def plot_highlight_behavior(self, df, target_behavior, y_column, x_column='delta_time'):
         """
         特定のbehaviorだけを色付けし、それ以外を灰色で表示する関数。
+        """
+        plt.figure(figsize=(10, 6))
+        
+        # behaviorごとの色を固定する辞書
+        color_palette = {'BL': '#023eff', 'grooming': '#ff7c00', 'groomed': '#1ac938'}
+        target_color = color_palette.get(target_behavior, 'red')
+
+        # データを分離
+        other_df = df[df['behavior'] != target_behavior]
+        target_df = df[df['behavior'] == target_behavior]
+        
+        # --- 修正ポイント1: 各サンプル数を計算 ---
+        n_others = len(other_df)
+        n_target = len(target_df)
+        total_n = len(df)
+
+        # 1. ターゲット以外のデータを灰色でプロット
+        sns.scatterplot(
+            data=other_df,
+            x=x_column,
+            y=y_column,
+            color='gray',
+            alpha=0.25,
+            label=f'Others (n={n_others})'  # ラベルに n= を追加
+        )
+
+        # 2. ターゲットのデータだけを色付きで重ねてプロット
+        sns.scatterplot(
+            data=target_df,
+            x=x_column,
+            y=y_column,
+            color=target_color,
+            alpha=0.8,
+            label=f'{target_behavior} (n={n_target})'  # ラベルに n= を追加
+        )
+        
+        # --- 修正ポイント2: タイトルに総数を表示 ---
+        plt.title(f'Highlight: {target_behavior} ({self.position_dict[y_column]}) | Total n={total_n}')
+        
+        plt.xlabel('Time from the starting point (s)')
+        plt.ylabel('Temperature change (°C)')
+        plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+        plt.grid(True, linestyle='--', alpha=0.6)
+        plt.tight_layout()
+        plt.show()
+
+
+
+    def plot_highlight_behavior_without_n(self, df, target_behavior, y_column, x_column='delta_time'):
+        """
+        特定のbehaviorだけを色付けし、それ以外を灰色で表示する関数。
+        こちらは凡例にnを表示しないバージョン。
         """
         plt.figure(figsize=(10, 6))
         
